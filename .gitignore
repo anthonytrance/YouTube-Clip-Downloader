@@ -1,0 +1,5 @@
+worker/node_modules/
+worker/.wrangler/
+*.log
+.DS_Store
+Thumbs.db

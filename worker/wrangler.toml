@@ -1,0 +1,12 @@
+name = "yt-clip-worker"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = ""
+
+# Uncomment and set if you want to restrict which origins can call this worker.
+# Leave commented to allow all origins (fine for personal/small-scale use).
+# [vars]
+# ALLOWED_ORIGIN = "https://anthonytrance.github.io"

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Clip Downloader</title>
+  <meta name="description" content="Clip and download any segment of a YouTube video — in your browser, at any resolution.">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="site-header" role="banner">
+    <h1 class="site-title">YouTube Clip Downloader</h1>
+    <p class="site-tagline">Paste a URL · Pick your clip · Download</p>
+  </header>
+
+  <main id="app" class="app">
+
+    <!-- ── URL INPUT ─────────────────────────────────────────── -->
+    <section class="card" id="url-section" aria-label="Video URL input">
+      <label for="url-input" class="label">YouTube URL</label>
+      <div class="url-row">
+        <input
+          id="url-input"
+          type="url"
+          class="url-input"
+          placeholder="https://www.youtube.com/watch?v=..."
+          autocomplete="off"
+          spellcheck="false"
+          aria-describedby="url-hint"
+        >
+        <button id="load-btn" class="btn btn-primary" aria-label="Load video">Load</button>
+      </div>
+      <p id="url-hint" class="hint">Supports youtube.com and youtu.be links</p>
+    </section>
+
+    <!-- ── VIDEO PREVIEW ─────────────────────────────────────── -->
+    <section class="card hidden" id="video-section" aria-label="Video preview">
+      <div class="video-meta" id="video-meta" role="region" aria-label="Video information">
+        <img id="video-thumb" class="video-thumb" alt="" aria-hidden="true">
+        <div class="video-details">
+          <h2 id="video-title" class="video-title"></h2>
+          <p id="video-author" class="video-author"></p>
+          <p id="video-duration" class="video-duration"></p>
+        </div>
+      </div>
+
+      <div class="embed-wrapper" id="embed-wrapper">
+        <div id="yt-player"></div>
+      </div>
+    </section>
+
+    <!-- ── TIMELINE ───────────────────────────────────────────── -->
+    <section class="card hidden" id="clip-section" aria-label="Clip range selection">
+      <h2 class="section-heading">Select clip range</h2>
+
+      <div class="timeline-container" id="timeline-container" role="group" aria-label="Clip timeline">
+        <div class="timeline-track" id="timeline-track" aria-hidden="true">
+          <div class="timeline-range" id="timeline-range"></div>
+          <button
+            class="timeline-handle" id="handle-start"
+            role="slider"
+            aria-label="Clip start"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-orientation="horizontal"
+            tabindex="0"
+          ></button>
+          <button
+            class="timeline-handle" id="handle-end"
+            role="slider"
+            aria-label="Clip end"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="100"
+            aria-orientation="horizontal"
+            tabindex="0"
+          ></button>
+        </div>
+      </div>
+
+      <div class="time-inputs" role="group" aria-label="Clip start and end times">
+        <div class="time-input-group">
+          <label for="start-input" class="label">Start</label>
+          <input
+            id="start-input"
+            type="text"
+            class="time-input"
+            value="0:00.000"
+            aria-describedby="time-hint"
+            autocomplete="off"
+          >
+        </div>
+        <div class="time-input-group">
+          <label for="end-input" class="label">End</label>
+          <input
+            id="end-input"
+            type="text"
+            class="time-input"
+            value="0:00.000"
+            aria-describedby="time-hint"
+            autocomplete="off"
+          >
+        </div>
+        <p id="time-hint" class="hint">Format: H:MM:SS.mmm — e.g. 1:23 or 1:23.456</p>
+      </div>
+
+      <div class="clip-controls">
+        <button id="preview-btn" class="btn btn-secondary">Preview clip</button>
+        <span id="clip-duration-label" class="clip-duration" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <!-- ── FORMAT PICKER ─────────────────────────────────────── -->
+    <section class="card hidden" id="format-section" aria-label="Download format selection">
+      <h2 class="section-heading">Choose format</h2>
+
+      <div id="format-groups" class="format-groups" role="group" aria-label="Available formats">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="warning-box hidden" id="long-clip-warning" role="alert">
+        ⚠️ Long clips can use a lot of memory in your browser. Very long clips may fail on older devices.
+      </div>
+    </section>
+
+    <!-- ── DOWNLOAD CONTROLS ──────────────────────────────────── -->
+    <section class="card hidden" id="download-section" aria-label="Download">
+      <button id="download-btn" class="btn btn-primary btn-large" disabled>
+        Download clip
+      </button>
+
+      <!-- Progress -->
+      <div class="progress-container hidden" id="progress-container" role="status" aria-live="polite">
+        <div class="progress-bar-track" aria-hidden="true">
+          <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+        <p id="progress-label" class="progress-label"></p>
+      </div>
+
+      <!-- Live region for screen readers -->
+      <div id="sr-announce" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+    </section>
+
+    <!-- ── ERROR DISPLAY ──────────────────────────────────────── -->
+    <div class="error-box hidden" id="error-box" role="alert" aria-live="assertive">
+      <p id="error-message"></p>
+    </div>
+
+  </main>
+
+  <!-- ── COPYRIGHT NOTICE ───────────────────────────────────── -->
+  <footer class="site-footer" role="contentinfo">
+    <p class="copyright-notice">
+      Please respect copyright and the content source's Terms of Service.
+      This tool is for personal, legitimate use only. You are responsible for what you download.
+    </p>
+  </footer>
+
+  <!-- ── SCRIPTS ────────────────────────────────────────────── -->
+  <!-- FFmpeg.wasm — loaded lazily when the user first tries to download -->
+  <script src="js/config.js"></script>
+  <script src="js/time-input.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/format-picker.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/download.js"></script>
+  <script src="js/main.js"></script>
+  <!-- coi-serviceworker: enables SharedArrayBuffer for multi-threaded FFmpeg -->
+  <script src="coi-serviceworker.js"></script>
+</body>
+</html>
