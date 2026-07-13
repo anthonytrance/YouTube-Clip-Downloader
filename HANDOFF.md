@@ -13,12 +13,14 @@ route stays documented as a later upgrade (see section 0.4).
 - Release 2.1.0 is live on GitHub with Windows, Mac Apple Silicon, and Mac
   Intel downloads. The GitHub Pages landing page and friendly README are live.
 - The portable Windows zip was also uploaded to `/Djpitch trance` in Dropbox.
+- Release 2.1.1 is live as the latest GitHub release. Its Windows, Mac Apple
+  Silicon, and Mac Intel frozen builds all passed CI self-tests and smoke tests.
+  The Dropbox Windows copy was also replaced with 2.1.1.
 - Version 2.1.1 fixes two bugs found during Anthony's local test: Preview now
   explicitly unmutes the YouTube player and announces playback, and format
   sizes are estimates for the selected clip rather than the entire source.
-- The 2.1.1 source passed the offline media self-test and a real-YouTube
-  Playwright check covering preview playback, live-region feedback, and
-  duration-scaled file-size estimates.
+  The source also passed a real-YouTube Playwright check covering preview
+  playback, live-region feedback, and duration-scaled file-size estimates.
 
 ### 0.1 Landed today (all committed, all verified on this machine)
 
