@@ -41,10 +41,19 @@ def _fetch_range(url, byte_start, byte_end):
         hi = min(pos + _CHUNK - 1, byte_end)
         r = _creq.get(f"{url}&range={pos}-{hi}",
                       impersonate="chrome124", timeout=120)
+        if r.status_code == 400 and pos == 0:
+            # Asked past end of a small file (filesize unknown/approx):
+            # fetch it whole instead.
+            r = _creq.get(url, impersonate="chrome124", timeout=120)
+            r.raise_for_status()
+            return bytes(r.content)
         r.raise_for_status()
         if not r.content:
             raise FastClipUnavailable(f"empty range response at {pos}")
         out += r.content
+        if len(r.content) < hi - pos + 1:
+            # short read: server gave us up to EOF
+            return bytes(out)
         pos += len(r.content)
     return bytes(out)
 
@@ -90,12 +99,17 @@ def _parse_sidx(buf, box_start, box_size):
     return segs
 
 
-def _partial_stream(url, start_s, end_s, dest):
+def _partial_stream(url, start_s, end_s, dest, filesize=None):
     """Write init + the segments covering [start_s, end_s] to dest.
 
     Returns the media time (seconds) at which the partial file begins.
+    filesize clamps range requests: googlevideo answers 400, not a short
+    read, when a range= request extends past end of file.
     """
-    head = _fetch_range(url, 0, HEAD_BYTES - 1)
+    head_end = HEAD_BYTES - 1
+    if filesize:
+        head_end = min(head_end, filesize - 1)
+    head = _fetch_range(url, 0, head_end)
     sidx = None
     for typ, pos, size in _boxes(head):
         if typ == b"sidx":
@@ -111,6 +125,8 @@ def _partial_stream(url, start_s, end_s, dest):
         raise FastClipUnavailable("requested range outside sidx coverage")
     lo = need[0][0]
     hi = need[-1][0] + need[-1][1] - 1
+    if filesize:
+        hi = min(hi, filesize - 1)
     if hi - lo > MAX_CLIP_BYTES:
         raise FastClipUnavailable("clip byte span too large")
     init = head[:sidx[0] + sidx[1]]
@@ -181,7 +197,8 @@ def make_clip(info, start_s, end_s, kind, height, out_dir, ffmpeg,
     def grab(label, fmt):
         try:
             dest = str(out_dir / f"_{label}.part.mp4")
-            seg0 = _partial_stream(fmt["url"], start_s, end_s, dest)
+            size = fmt.get("filesize") or None
+            seg0 = _partial_stream(fmt["url"], start_s, end_s, dest, size)
             parts[label] = (dest, seg0)
         except Exception as exc:
             errors.append(f"{label}: {exc}")
