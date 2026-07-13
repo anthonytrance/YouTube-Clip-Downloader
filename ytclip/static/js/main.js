@@ -84,7 +84,7 @@
       startInput.value = TimeInput.format(0);
       endInput.value   = TimeInput.format(data.duration * 1000);
       updateClipMeta(0, data.duration * 1000);
-      FormatPicker.render(formatGroups, data.formats);
+      FormatPicker.render(formatGroups, data.formats, data.duration);
 
       videoSection.classList.remove('hidden');
       clipSection.classList.remove('hidden');
@@ -124,8 +124,8 @@
 
   function updateClipMeta(startMs, endMs) {
     const lenMs = endMs - startMs;
-    const lenSec = lenMs / 1000;
     clipDuration.textContent = `Clip length: ${TimeInput.format(lenMs)}`;
+    FormatPicker.setClipSeconds(lenMs / 1000);
     longWarn.classList.toggle('hidden', !Downloader.isLongClip(startMs, endMs));
   }
 
@@ -136,11 +136,21 @@
   const setEndBtn    = $('set-end-btn');
   const markerAnnounce = $('marker-announce');
 
+  // Force audible playback. Browsers allow programmatic play only when the
+  // player is muted, so the YouTube embed silently starts muted — useless
+  // for a blind user. Calling unMute()/setVolume() from inside a real click
+  // (a user gesture) restores sound.
+  function playAudible() {
+    if (!ytPlayer) return;
+    try { ytPlayer.unMute(); ytPlayer.setVolume(100); } catch {}
+    ytPlayer.playVideo();
+  }
+
   playPauseBtn.addEventListener('click', () => {
     if (!ytPlayer) return;
     // YT.PlayerState.PLAYING = 1
     if (ytPlayer.getPlayerState?.() === 1) ytPlayer.pauseVideo();
-    else ytPlayer.playVideo();
+    else playAudible();
   });
 
   setInterval(() => {
@@ -207,16 +217,26 @@
     }
     const { startMs, endMs } = Timeline.getRange();
     ytPlayer.seekTo(startMs / 1000, true);
-    ytPlayer.playVideo();
+    playAudible();
     previewBtn.textContent = 'Stop preview';
+    announce('Previewing clip.');
+    let played = false;
     previewInterval = setInterval(() => {
       if (!ytPlayer) return;
       const bounds = Timeline.getRange();
       const current = ytPlayer.getCurrentTime?.() * 1000;
+      if (ytPlayer.getPlayerState?.() === 1) played = true;
       if (current >= bounds.endMs) {
         ytPlayer.seekTo(bounds.startMs / 1000, true);
       }
     }, 250);
+    // If the browser refused to start playback within a moment, tell the
+    // user how to nudge it (some browsers require pressing the player once).
+    setTimeout(() => {
+      if (previewInterval && !played) {
+        announce('If you hear nothing, press the Play button once, then Preview again.');
+      }
+    }, 1500);
   });
 
   function stopPreview() {

@@ -7,12 +7,18 @@ window.FormatPicker = (() => {
   let _selectedBtn = null;
   let _selectedFormat = null;
   let _container = null;
+  let _videoDuration = 0;      // seconds, whole video
+  let _clipSeconds = 0;        // seconds, current selection
+  let _sizeSpans = [];         // {span, fmt} to refresh live
 
-  function render(container, formats) {
+  function render(container, formats, videoDuration) {
     _container = container;
     _formats = formats || [];
+    _videoDuration = videoDuration || 0;
+    _clipSeconds = _videoDuration;   // until a range is set
     _selectedBtn = null;
     _selectedFormat = null;
+    _sizeSpans = [];
     container.innerHTML = '';
 
     const videoFormats  = _formats.filter(f => f.type === 'video');
@@ -29,7 +35,8 @@ window.FormatPicker = (() => {
     if (dedupedVideo.length) {
       container.appendChild(_makeGroup('Video', dedupedVideo, (f) => ({
         label: f.label,
-        meta: `${f.container.toUpperCase()} · ${_sizeLbl(f.filesize)}`,
+        meta: `${f.container.toUpperCase()} · `,
+        sizeFmt: f,
       })));
     }
 
@@ -39,9 +46,30 @@ window.FormatPicker = (() => {
       const mp3Format = { itag: 'mp3_320', label: 'MP3 320 kbps', type: 'audio_mp3', url: null, _isMp3: true };
       container.appendChild(_makeGroup('Audio', [...audioItems, mp3Format], (f) => ({
         label: f._isMp3 ? 'MP3 320 kbps' : f.label,
-        meta: f._isMp3 ? 'Audio only' : `${f.container.toUpperCase()} · Audio only · ${_sizeLbl(f.filesize)}`,
-        reencodeNote: f._isMp3 ? 'Requires re-encode' : null,
+        meta: f._isMp3 ? 'Audio only · ' : `${f.container.toUpperCase()} · Audio only · `,
+        sizeFmt: f._isMp3 ? null : f,
       })));
+    }
+  }
+
+  // Full-file bytes -> estimated bytes for the current clip length.
+  function _clipBytes(fmt) {
+    const full = fmt && fmt.filesize;
+    if (!full || !_videoDuration) return null;
+    return full * (_clipSeconds / _videoDuration);
+  }
+
+  function _sizeText(fmt) {
+    if (!fmt) return '';
+    const est = _clipBytes(fmt);
+    return est ? `~${_sizeLbl(est)} for this clip` : '';
+  }
+
+  // Called as the start/end selection changes so sizes track the clip.
+  function setClipSeconds(seconds) {
+    _clipSeconds = Math.max(0, seconds || 0);
+    for (const { span, fmt } of _sizeSpans) {
+      span.textContent = _sizeText(fmt);
     }
   }
 
@@ -61,11 +89,27 @@ window.FormatPicker = (() => {
       btn.className = 'format-btn';
       btn.type = 'button';
       btn.setAttribute('aria-pressed', 'false');
-      btn.innerHTML = `
-        <span class="format-btn-label">${_esc(desc.label)}</span>
-        <span class="format-btn-meta">${_esc(desc.meta)}</span>
-        ${desc.reencodeNote ? `<span class="format-btn-reencode">${_esc(desc.reencodeNote)}</span>` : ''}
-      `;
+
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'format-btn-label';
+      labelSpan.textContent = desc.label;
+      const metaSpan = document.createElement('span');
+      metaSpan.className = 'format-btn-meta';
+      const sizeSpan = document.createElement('span');
+      sizeSpan.className = 'format-btn-size';
+      sizeSpan.textContent = _sizeText(desc.sizeFmt);
+      metaSpan.textContent = desc.meta;
+      metaSpan.appendChild(sizeSpan);
+
+      btn.appendChild(labelSpan);
+      btn.appendChild(metaSpan);
+      if (fmt._isMp3) {
+        const re = document.createElement('span');
+        re.className = 'format-btn-reencode';
+        re.textContent = 'Requires re-encode';
+        btn.appendChild(re);
+      }
+      _sizeSpans.push({ span: sizeSpan, fmt: desc.sizeFmt });
       btn.addEventListener('click', () => _select(btn, fmt));
       list.appendChild(btn);
     }
@@ -91,12 +135,9 @@ window.FormatPicker = (() => {
   function _sizeLbl(bytes) {
     if (!bytes) return '? MB';
     if (bytes > 1e9) return (bytes / 1e9).toFixed(1) + ' GB';
-    return (bytes / 1e6).toFixed(0) + ' MB';
+    if (bytes > 1e6) return (bytes / 1e6).toFixed(0) + ' MB';
+    return Math.max(0.1, Math.round(bytes / 1e5) / 10) + ' MB';
   }
 
-  function _esc(str) {
-    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  return { render, getSelected };
+  return { render, getSelected, setClipSeconds };
 })();

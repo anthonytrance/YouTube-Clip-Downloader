@@ -1,12 +1,24 @@
 # YouTube Clipper project handoff
 
-Status: 2026-07-13 (evening update below supersedes the morning plan where they conflict)
+Status: 2026-07-13 (latest update below supersedes older notes where they conflict)
 
 ## 0. 2026-07-13 evening: decisions made and work landed
 
 Anthony decided: desktop-first. The recipient has a Mac (build for Windows too),
 unsigned builds for now (no Apple Developer account yet), the a-Shell iPhone
 route stays documented as a later upgrade (see section 0.4).
+
+### 0.0 Latest release status
+
+- Release 2.1.0 is live on GitHub with Windows, Mac Apple Silicon, and Mac
+  Intel downloads. The GitHub Pages landing page and friendly README are live.
+- The portable Windows zip was also uploaded to `/Djpitch trance` in Dropbox.
+- Version 2.1.1 fixes two bugs found during Anthony's local test: Preview now
+  explicitly unmutes the YouTube player and announces playback, and format
+  sizes are estimates for the selected clip rather than the entire source.
+- The 2.1.1 source passed the offline media self-test and a real-YouTube
+  Playwright check covering preview playback, live-region feedback, and
+  duration-scaled file-size estimates.
 
 ### 0.1 Landed today (all committed, all verified on this machine)
 

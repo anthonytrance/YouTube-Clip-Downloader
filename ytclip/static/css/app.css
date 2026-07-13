@@ -507,3 +507,8 @@ body {
 .lan-qr { margin-top: 0.75rem; max-width: 260px; }
 .lan-qr svg { width: 100%; height: auto; background: #fff; padding: 8px;
               border-radius: 8px; }
+
+.format-btn-size { display: block; margin-top: 0.1rem; opacity: 0.9; }
+.exact-cut-row { margin: 0.6rem 0; }
+.exact-cut-label { display: inline-flex; align-items: center; gap: 0.4rem;
+                   font-weight: 600; }

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "yt-clip-downloader"
-version = "2.1.0"
+version = "2.1.1"
 description = "Clip and download YouTube video segments through an accessible local web interface."
 readme = "README.md"
 requires-python = ">=3.9"
