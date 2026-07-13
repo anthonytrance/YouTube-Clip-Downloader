@@ -1,116 +1,77 @@
-# YouTube Clip Downloader
+# YouTube Clipper
 
-Clip and download any segment of a YouTube video — any resolution, native audio, or MP3 at 320 kbps.
+Cut an exact piece out of any YouTube video and save it as a file, using
+nothing but your own computer. Paste a link, watch the video, press
+"Set start here" and "Set end here" at the right moments, and download
+your clip as video or audio. Everything runs locally: nothing is uploaded
+anywhere, and downloads use your own internet connection.
 
-Everything runs **on your own computer**: a small app starts in the background and opens a friendly page in your browser where you paste a link, pick your start and end point, choose a format, and download. No accounts, no ads, no third-party servers.
+Built to be fully usable with a screen reader and keyboard only.
 
-Works on **macOS** and **Windows**. Fully keyboard-accessible and screen-reader friendly.
+## Download
 
----
+Grab the version for your computer, unzip it, open the app. No installer,
+no account, no setup.
 
-## Install (one time)
+- Windows: https://github.com/anthonytrance/YouTube-Clip-Downloader/releases/latest/download/YouTube-Clipper-Windows.zip
+- Mac with Apple Silicon (M1 or newer, most Macs since 2021): https://github.com/anthonytrance/YouTube-Clip-Downloader/releases/latest/download/YouTube-Clipper-Mac-AppleSilicon.zip
+- Mac with Intel (older Macs): https://github.com/anthonytrance/YouTube-Clip-Downloader/releases/latest/download/YouTube-Clipper-Mac-Intel.zip
 
-You'll paste one command into a terminal. It looks technical, but it's copy, paste, press Enter, wait a minute. That's genuinely all.
+Not sure which Mac you have? Apple menu, About This Mac. If it mentions
+M1, M2, M3 or M4, take the Apple Silicon one.
 
-### macOS
+### First launch
 
-1. Open **Terminal** (press Cmd+Space, type `terminal`, press Enter).
-2. Copy this whole line, paste it into Terminal, and press Enter:
+- **Windows**: double-click `YouTube Clipper.exe`. The first time, Windows
+  shows a blue "Windows protected your PC" screen because the app isn't
+  code-signed. Click "More info", then "Run anyway". Once.
+- **Mac**: double-click `YouTube Clipper`. macOS will refuse the first
+  time ("unidentified developer"). Open System Settings, Privacy &
+  Security, scroll down and click "Open Anyway" next to the message about
+  YouTube Clipper, then confirm. Once.
 
-```
-curl -LsSf https://astral.sh/uv/install.sh | sh && ~/.local/bin/uv tool install git+https://github.com/anthonytrance/YouTube-Clip-Downloader && ~/.local/bin/ytclip
-```
+Your browser then opens the clipper page automatically. Closing the small
+terminal window that appears alongside stops the app.
 
-3. Wait while it sets itself up (a minute or two). When it's done, your browser opens with the app running. Done.
+## How to use it
 
-### Windows
+1. Paste a YouTube link and press Load.
+2. The video appears with a player. Play it.
+3. At the moment your clip should begin, press "Set start here".
+   At the end, press "Set end here". Fine-tune with the plus and minus
+   buttons (1 second and 0.1 second steps), or type exact times.
+4. Press "Preview clip" to hear/see exactly what you selected.
+5. Pick a format:
+   - Video (choose a resolution)
+   - Audio (m4a, original quality, cut with zero quality loss)
+   - MP3 (320 kbps)
+6. By default cuts are frame-exact, which re-encodes the video once.
+   Untick "Frame-exact cut" to keep YouTube's original video bits
+   untouched instead; the clip then starts and ends at the nearest safe
+   cut points, usually a few seconds wider than your markers.
+7. Press "Download clip". The file lands in your normal Downloads folder.
 
-1. Open **PowerShell** (press the Windows key, type `powershell`, press Enter).
-2. Copy this whole line, paste it into PowerShell, and press Enter:
+A 15-second clip typically takes a couple of seconds in lossless mode and
+around 10-15 seconds frame-exact, depending on your machine.
 
-```
-irm https://astral.sh/uv/install.ps1 | iex; & "$env:USERPROFILE\.local\bin\uv.exe" tool install git+https://github.com/anthonytrance/YouTube-Clip-Downloader; & "$env:USERPROFILE\.local\bin\ytclip.exe"
-```
+## Use it from your phone
 
-3. Same story: wait a minute, browser opens, done.
+At the bottom of the page there's "Use from your phone". Turn it on and
+the app shows an address plus a QR code. Open that address in your
+phone's browser (or scan the code with the camera) while the phone is on
+the same WiFi as the computer, and you get the same clipper on the phone,
+with downloads landing in the phone's browser downloads. Turn it off when
+you don't need it; it's off by default and the app is otherwise only
+reachable from the computer it runs on.
 
----
+## For developers
 
-## Using it (every time after that)
+Python 3.9+. `pip install .` then `ytclip`. Useful flags: `--port`,
+`--no-browser`, `--lan`, `--selftest [--online]`, `--smoke`.
+`packaging/build.py` produces the portable builds (PyInstaller, bundles
+ffmpeg and Deno). Architecture and history: see `HANDOFF.md` and
+`PLAN.md`. CI runs install + selftest on macOS and Windows; the Package
+workflow builds all three portable zips.
 
-Open a terminal and type:
-
-```
-ytclip
-```
-
-The app starts and your browser opens automatically. Paste a YouTube link, press Load, choose your clip range and format, press Download clip. The file lands in your normal Downloads folder.
-
-To stop the app, go back to the terminal window and press Ctrl+C (or just close the window).
-
-Note for the very first download: the app fetches its video-processing engine (ffmpeg, about 80 MB) once in the background, so the first download can take a little longer to start. After that it's fast.
-
----
-
-## Using it from your phone
-
-Start the app with:
-
-```
-ytclip --lan
-```
-
-It prints an address like `http://192.168.1.23:8574`. Open that address in your phone's browser (phone must be on the same WiFi as the computer). Same interface, downloads land on your phone.
-
----
-
-## Checking that everything works
-
-```
-ytclip --selftest
-```
-
-This verifies the whole processing pipeline on your machine and prints a plain-language pass/fail report. Add `--online` to also test a real (tiny) YouTube download:
-
-```
-ytclip --selftest --online
-```
-
----
-
-## Updating
-
-YouTube changes things regularly; the downloader engine (yt-dlp) releases fixes quickly. The app checks at startup and tells you when an update is available. To update, run:
-
-```
-uv tool upgrade yt-clip-downloader
-```
-
-If downloads suddenly stop working, this command is almost always the fix.
-
----
-
-## Troubleshooting
-
-**"command not found: ytclip" / "'ytclip' is not recognized"** — close the terminal window and open a new one (the install updates your path, which only takes effect in new windows). If it still doesn't work: on macOS run `~/.local/bin/ytclip`, on Windows run `& "$env:USERPROFILE\.local\bin\ytclip.exe"`.
-
-**"YouTube is asking this network to prove it isn't a bot"** — YouTube occasionally challenges a network. It usually clears on its own; try again later. Running from a normal home connection (not a VPN) helps.
-
-**Downloads fail with an extractor error** — run `uv tool upgrade yt-clip-downloader` and try again.
-
-**Port already in use** — start with a different port: `ytclip --port 8600`.
-
----
-
-## Accessibility
-
-- Full keyboard navigation (arrow keys nudge the clip handles, Tab moves between controls)
-- All controls have ARIA labels; progress and completion are announced via live regions
-- Times can be typed directly (e.g. `1:23.456`) instead of dragging
-- Respects reduced-motion and light/dark preferences
-
----
-
-## Legal
-
-Please respect copyright and the Terms of Service of content platforms. This tool is for personal, legitimate use only. You are responsible for what you download.
+Please respect copyright and YouTube's Terms of Service. This tool is for
+clipping content you own or are authorized to reuse.

@@ -177,6 +177,22 @@
       <p id="error-message"></p>
     </div>
 
+    <!-- ── PHONE ACCESS ───────────────────────────────────────── -->
+    <section class="card" id="phone-section" aria-label="Use from your phone">
+      <h2 class="section-heading">Use from your phone</h2>
+      <p class="hint">Your phone must be on the same WiFi network as this
+      computer. Turn this on, then open the address below in your phone's
+      browser, or scan the code with the phone's camera.</p>
+      <button id="lan-toggle" class="btn btn-secondary">Turn on phone access</button>
+      <div id="lan-result" class="lan-result hidden">
+        <p class="lan-url-label">Address for your phone:
+          <strong id="lan-url" class="lan-url"></strong></p>
+        <div id="lan-qr" class="lan-qr" role="img"
+             aria-label="QR code containing the phone address shown above"></div>
+      </div>
+      <p id="lan-status" class="hint" aria-live="polite"></p>
+    </section>
+
   </main>
 
   <!-- ── COPYRIGHT NOTICE ───────────────────────────────────── -->

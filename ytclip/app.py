@@ -94,6 +94,60 @@ def job_file(job_id):
 
 
 # ---------------------------------------------------------------------------
+# Phone access (opt-in LAN listener on port+1, same app)
+# ---------------------------------------------------------------------------
+
+_lan_state = {"server": None, "thread": None, "port": None}
+_lan_lock = threading.Lock()
+
+
+def _lan_payload():
+    ip = _lan_ip()
+    enabled = _lan_state["server"] is not None
+    if not enabled or not ip:
+        return {"enabled": enabled, "url": None, "qr_svg": None,
+                "reachable": bool(ip)}
+    url = f"http://{ip}:{_lan_state['port']}"
+    import io
+
+    import qrcode
+    import qrcode.image.svg
+
+    img = qrcode.make(url, image_factory=qrcode.image.svg.SvgPathImage,
+                      box_size=14)
+    buf = io.BytesIO()
+    img.save(buf)
+    return {"enabled": True, "url": url,
+            "qr_svg": buf.getvalue().decode("utf-8"), "reachable": True}
+
+
+@app.route("/api/lan", methods=["GET", "POST"])
+def lan():
+    if request.method == "GET":
+        return jsonify(_lan_payload())
+    enable = bool((request.get_json(silent=True) or {}).get("enable"))
+    with _lan_lock:
+        if enable and _lan_state["server"] is None:
+            from werkzeug.serving import make_server
+
+            port = int(app.config.get("YTCLIP_PORT", 8574)) + 1
+            try:
+                srv = make_server("0.0.0.0", port, app, threaded=True)
+            except OSError as exc:
+                return jsonify({"error": f"Could not open port {port}: {exc}"}), 500
+            t = threading.Thread(target=srv.serve_forever, daemon=True)
+            t.start()
+            _lan_state.update(server=srv, thread=t, port=port)
+        elif not enable and _lan_state["server"] is not None:
+            try:
+                _lan_state["server"].shutdown()
+            except Exception:
+                pass
+            _lan_state.update(server=None, thread=None, port=None)
+    return jsonify(_lan_payload())
+
+
+# ---------------------------------------------------------------------------
 # yt-dlp update check (non-fatal, runs in background)
 # ---------------------------------------------------------------------------
 
@@ -152,6 +206,7 @@ def main(argv=None):
         sys.exit(selftest.run(online=args.online))
 
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
+    app.config["YTCLIP_PORT"] = args.port
     engine.ensure_ffmpeg_async()
     threading.Thread(target=_check_ytdlp_update, daemon=True).start()
 

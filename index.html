@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Clipper — cut and save any piece of a YouTube video</title>
+  <meta name="description" content="A free app for Windows and Mac that cuts an exact piece out of any YouTube video and saves it as a file. Runs entirely on your own computer. Screen-reader friendly.">
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 42rem;
+           margin: 0 auto; padding: 1.5rem; line-height: 1.6; }
+    h1 { font-size: 1.9rem; margin-bottom: 0.2rem; }
+    .tagline { font-size: 1.1rem; margin-top: 0; }
+    .dl { display: block; padding: 0.9rem 1.2rem; margin: 0.7rem 0;
+          border: 2px solid currentColor; border-radius: 10px;
+          text-decoration: none; font-weight: 600; font-size: 1.05rem; }
+    .dl small { display: block; font-weight: 400; }
+    ol li { margin-bottom: 0.5rem; }
+    footer { margin-top: 2.5rem; font-size: 0.85rem; opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>YouTube Clipper</h1>
+    <p class="tagline">Cut an exact piece out of any YouTube video and save
+    it as a video or audio file. Free, no account, and everything runs on
+    your own computer — nothing is uploaded anywhere.</p>
+  </header>
+
+  <main>
+    <h2>Download</h2>
+    <p>Pick your computer, unzip, open the app. That's the whole install.</p>
+
+    <a class="dl" href="https://github.com/anthonytrance/YouTube-Clip-Downloader/releases/latest/download/YouTube-Clipper-Windows.zip">
+      Download for Windows
+      <small>Windows 10 or 11</small>
+    </a>
+    <a class="dl" href="https://github.com/anthonytrance/YouTube-Clip-Downloader/releases/latest/download/YouTube-Clipper-Mac-AppleSilicon.zip">
+      Download for Mac (Apple Silicon)
+      <small>Macs with an M1, M2, M3 or M4 chip — most Macs since 2021</small>
+    </a>
+    <a class="dl" href="https://github.com/anthonytrance/YouTube-Clip-Downloader/releases/latest/download/YouTube-Clipper-Mac-Intel.zip">
+      Download for Mac (Intel)
+      <small>Older Macs. Check via Apple menu, About This Mac</small>
+    </a>
+
+    <h2>First launch</h2>
+    <p>The app isn't code-signed yet, so both systems ask once for
+    permission:</p>
+    <ol>
+      <li><strong>Windows:</strong> open <em>YouTube Clipper.exe</em>. On the
+      blue "Windows protected your PC" screen click <em>More info</em>, then
+      <em>Run anyway</em>. Only the first time.</li>
+      <li><strong>Mac:</strong> open <em>YouTube Clipper</em>. When macOS
+      refuses, go to System Settings, Privacy &amp; Security, scroll down and
+      choose <em>Open Anyway</em>. Only the first time.</li>
+    </ol>
+    <p>Your browser then opens the clipper page by itself.</p>
+
+    <h2>How it works</h2>
+    <ol>
+      <li>Paste a YouTube link and press Load. The video plays right on the page.</li>
+      <li>Press <em>Set start here</em> and <em>Set end here</em> at the right
+      moments, or type exact times. Fine-tune in steps of a second or a tenth.</li>
+      <li>Preview your selection, pick video, original-quality audio, or MP3,
+      and press Download. The file lands in your Downloads folder.</li>
+    </ol>
+    <p>There's also a lossless mode that keeps YouTube's original video
+    quality untouched, and a phone mode: turn on "Use from your phone" in the
+    app and scan the QR code to use the clipper from a phone on the same
+    WiFi.</p>
+    <p>The whole app works with keyboard only and with screen readers
+    (NVDA, VoiceOver).</p>
+  </main>
+
+  <footer>
+    <p>Please respect copyright and YouTube's Terms of Service. This tool is
+    for clipping content you own or are authorized to reuse.</p>
+    <p><a href="https://github.com/anthonytrance/YouTube-Clip-Downloader">Source code on GitHub</a></p>
+  </footer>
+</body>
+</html>

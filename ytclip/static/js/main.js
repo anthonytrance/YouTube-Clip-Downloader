@@ -310,6 +310,48 @@
     [videoSection, clipSection, formatSection, downloadSection].forEach(s => s.classList.add('hidden'));
   }
 
+  // ── Phone access (LAN listener + QR) ───────────────────────
+  const lanToggle = $('lan-toggle');
+  const lanResult = $('lan-result');
+  const lanUrl    = $('lan-url');
+  const lanQr     = $('lan-qr');
+  const lanStatus = $('lan-status');
+
+  async function refreshLan(post) {
+    try {
+      const resp = await fetch('/api/lan', post
+        ? { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(post) }
+        : undefined);
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Phone access failed');
+      if (data.enabled && data.url) {
+        lanUrl.textContent = data.url;
+        lanQr.innerHTML = data.qr_svg || '';
+        lanResult.classList.remove('hidden');
+        lanToggle.textContent = 'Turn off phone access';
+        lanStatus.textContent = 'Phone access is on.';
+      } else {
+        lanResult.classList.add('hidden');
+        lanToggle.textContent = 'Turn on phone access';
+        lanStatus.textContent = data.enabled === false && post
+          ? 'Phone access is off.' : '';
+        if (data.enabled && !data.url) {
+          lanStatus.textContent = 'Could not find this computer\'s network address. Are you connected to WiFi or ethernet?';
+        }
+      }
+    } catch (err) {
+      lanStatus.textContent = err.message;
+    }
+  }
+
+  lanToggle.addEventListener('click', () => {
+    const enabling = lanToggle.textContent.includes('on phone');
+    lanToggle.disabled = true;
+    refreshLan({ enable: enabling }).finally(() => { lanToggle.disabled = false; });
+  });
+  refreshLan();
+
   // ── URL parser ─────────────────────────────────────────────
   function extractVideoId(url) {
     try {

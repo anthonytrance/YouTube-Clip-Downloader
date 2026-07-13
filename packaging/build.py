@@ -95,8 +95,10 @@ def main():
         encoding="utf-8",
     )
 
-    osname = {"Windows": "windows", "Darwin": f"mac-{platform.machine()}",
-              "Linux": "linux"}[platform.system()]
+    if platform.system() == "Darwin":
+        osname = "Mac-AppleSilicon" if platform.machine() == "arm64" else "Mac-Intel"
+    else:
+        osname = {"Windows": "Windows", "Linux": "Linux"}[platform.system()]
     zip_path = DIST / f"YouTube-Clipper-{osname}"
     shutil.make_archive(str(zip_path), "zip", DIST, APP_NAME)
     print(f"\nBuilt: {app_dir}\nZip:   {zip_path}.zip")
