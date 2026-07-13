@@ -2,10 +2,8 @@
  * App bootstrap — wires all modules together.
  */
 (() => {
-  const WORKER = window.APP_CONFIG.WORKER_URL;
-
   // ── State ──────────────────────────────────────────────────
-  let videoInfo = null;   // response from /info
+  let videoInfo = null;   // response from /api/info
   let ytPlayer  = null;   // YouTube IFrame player instance
   let previewInterval = null;
 
@@ -75,11 +73,7 @@
     hideAll();
 
     try {
-      if (WORKER.includes('PLACEHOLDER')) {
-        throw new Error("The worker URL hasn't been configured yet. Set WORKER_URL in js/config.js.");
-      }
-
-      const resp = await fetch(`${WORKER}/info?v=${videoId}`);
+      const resp = await fetch(`/api/info?url=${encodeURIComponent(raw)}`);
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || `Server error ${resp.status}`);
 
@@ -170,12 +164,11 @@
     clearInterval(previewInterval);
 
     await Downloader.run({
-      format:       fmt,
-      videoFormats: videoInfo?.formats ?? [],
+      format:     fmt,
+      videoUrl:   videoInfo?.url ?? urlInput.value.trim(),
       startMs,
       endMs,
-      durationMs:   (videoInfo?.duration ?? 0) * 1000,
-      title:        videoInfo?.title ?? 'video',
+      durationMs: (videoInfo?.duration ?? 0) * 1000,
       onProgress: (msg, pct) => Progress.set(pct, msg),
       onDone: () => {
         Progress.announce('Download complete!');

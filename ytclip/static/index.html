@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YouTube Clip Downloader</title>
-  <meta name="description" content="Clip and download any segment of a YouTube video — in your browser, at any resolution.">
+  <meta name="description" content="Clip and download any segment of a YouTube video — processed locally on your own computer.">
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -120,7 +120,7 @@
       </div>
 
       <div class="warning-box hidden" id="long-clip-warning" role="alert">
-        ⚠️ Long clips can use a lot of memory in your browser. Very long clips may fail on older devices.
+        ⚠️ Very long clips take a while to process — the progress bar will keep you posted.
       </div>
     </section>
 
@@ -158,15 +158,11 @@
   </footer>
 
   <!-- ── SCRIPTS ────────────────────────────────────────────── -->
-  <!-- FFmpeg.wasm — loaded lazily when the user first tries to download -->
-  <script src="js/config.js"></script>
   <script src="js/time-input.js"></script>
   <script src="js/timeline.js"></script>
   <script src="js/format-picker.js"></script>
   <script src="js/progress.js"></script>
   <script src="js/download.js"></script>
   <script src="js/main.js"></script>
-  <!-- coi-serviceworker: enables SharedArrayBuffer for multi-threaded FFmpeg -->
-  <script src="coi-serviceworker.js"></script>
 </body>
 </html>

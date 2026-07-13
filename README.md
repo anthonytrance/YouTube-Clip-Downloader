@@ -1,93 +1,116 @@
 # YouTube Clip Downloader
 
-A client-side web app for clipping and downloading segments from YouTube videos.
-Hosted on GitHub Pages. No login required — just paste a URL and go.
+Clip and download any segment of a YouTube video — any resolution, native audio, or MP3 at 320 kbps.
 
-**Live site:** https://anthonytrance.github.io/YouTube-Clip-Downloader/
+Everything runs **on your own computer**: a small app starts in the background and opens a friendly page in your browser where you paste a link, pick your start and end point, choose a format, and download. No accounts, no ads, no third-party servers.
 
----
-
-## How it works
-
-1. Paste a YouTube URL and click **Load**.
-2. Use the scrubber (or type times directly) to select your clip range.
-3. Choose a format — any resolution from 144p to 4K, native audio, or MP3 320kbps.
-4. Click **Download clip** — FFmpeg runs in your browser, clips and packages the file, then saves it.
-
-No server sees your download. All processing happens in your browser.
+Works on **macOS** and **Windows**. Fully keyboard-accessible and screen-reader friendly.
 
 ---
 
-## Project structure
+## Install (one time)
+
+You'll paste one command into a terminal. It looks technical, but it's copy, paste, press Enter, wait a minute. That's genuinely all.
+
+### macOS
+
+1. Open **Terminal** (press Cmd+Space, type `terminal`, press Enter).
+2. Copy this whole line, paste it into Terminal, and press Enter:
 
 ```
-/                  ← GitHub Pages static site (the UI)
-  index.html
-  css/app.css
-  js/
-    config.js       ← Set WORKER_URL here after deploying the worker
-    main.js
-    time-input.js
-    timeline.js
-    format-picker.js
-    progress.js
-    download.js
-  coi-serviceworker.js
+curl -LsSf https://astral.sh/uv/install.sh | sh && ~/.local/bin/uv tool install git+https://github.com/anthonytrance/YouTube-Clip-Downloader && ~/.local/bin/ytclip
+```
 
-/worker/           ← Cloudflare Worker (the YouTube resolver + byte proxy)
-  README.md        ← Deploy instructions for the worker host
-  src/index.js
-  package.json
-  wrangler.toml
+3. Wait while it sets itself up (a minute or two). When it's done, your browser opens with the app running. Done.
+
+### Windows
+
+1. Open **PowerShell** (press the Windows key, type `powershell`, press Enter).
+2. Copy this whole line, paste it into PowerShell, and press Enter:
+
+```
+irm https://astral.sh/uv/install.ps1 | iex; & "$env:USERPROFILE\.local\bin\uv.exe" tool install git+https://github.com/anthonytrance/YouTube-Clip-Downloader; & "$env:USERPROFILE\.local\bin\ytclip.exe"
+```
+
+3. Same story: wait a minute, browser opens, done.
+
+---
+
+## Using it (every time after that)
+
+Open a terminal and type:
+
+```
+ytclip
+```
+
+The app starts and your browser opens automatically. Paste a YouTube link, press Load, choose your clip range and format, press Download clip. The file lands in your normal Downloads folder.
+
+To stop the app, go back to the terminal window and press Ctrl+C (or just close the window).
+
+Note for the very first download: the app fetches its video-processing engine (ffmpeg, about 80 MB) once in the background, so the first download can take a little longer to start. After that it's fast.
+
+---
+
+## Using it from your phone
+
+Start the app with:
+
+```
+ytclip --lan
+```
+
+It prints an address like `http://192.168.1.23:8574`. Open that address in your phone's browser (phone must be on the same WiFi as the computer). Same interface, downloads land on your phone.
+
+---
+
+## Checking that everything works
+
+```
+ytclip --selftest
+```
+
+This verifies the whole processing pipeline on your machine and prints a plain-language pass/fail report. Add `--online` to also test a real (tiny) YouTube download:
+
+```
+ytclip --selftest --online
 ```
 
 ---
 
-## Setting up the worker
+## Updating
 
-The app needs a Cloudflare Worker deployed to resolve YouTube stream URLs and proxy bytes.
-See **[worker/README.md](worker/README.md)** for full deploy instructions.
+YouTube changes things regularly; the downloader engine (yt-dlp) releases fixes quickly. The app checks at startup and tells you when an update is available. To update, run:
 
-Once the worker is deployed, update the `WORKER_URL` constant in `js/config.js`:
-
-```js
-const WORKER_URL = 'https://yt-clip-worker.YOUR-SUBDOMAIN.workers.dev';
+```
+uv tool upgrade yt-clip-downloader
 ```
 
-Commit and push. GitHub Pages will pick up the change within a minute.
+If downloads suddenly stop working, this command is almost always the fix.
 
 ---
 
-## Worker API health
+## Troubleshooting
 
-The worker was last tested: **2026-04-17**
+**"command not found: ytclip" / "'ytclip' is not recognized"** — close the terminal window and open a new one (the install updates your path, which only takes effect in new windows). If it still doesn't work: on macOS run `~/.local/bin/ytclip`, on Windows run `& "$env:USERPROFILE\.local\bin\ytclip.exe"`.
 
-Known working Cloudflare Worker endpoint: *(set after worker is deployed)*
+**"YouTube is asking this network to prove it isn't a bot"** — YouTube occasionally challenges a network. It usually clears on its own; try again later. Running from a normal home connection (not a VPN) helps.
 
-If streams stop working, the `youtubei.js` library in the worker may need updating:
-```bash
-cd worker && npm update youtubei.js && npx wrangler deploy
-```
+**Downloads fail with an extractor error** — run `uv tool upgrade yt-clip-downloader` and try again.
+
+**Port already in use** — start with a different port: `ytclip --port 8600`.
 
 ---
 
 ## Accessibility
 
-- Full keyboard navigation (Arrow keys on timeline handles, Tab between controls)
-- Screen reader friendly — all interactive elements have ARIA labels and live regions
-- Supports `prefers-reduced-motion` and `prefers-color-scheme` (light/dark auto)
-- Touch-optimised controls for mobile
-
----
-
-## Planned features (not in MVP)
-
-- Additional sites: SoundCloud, Vimeo, Twitch clips, TikTok, Facebook video
-- Livestream clipping (clip from what's already aired)
+- Full keyboard navigation (arrow keys nudge the clip handles, Tab moves between controls)
+- All controls have ARIA labels; progress and completion are announced via live regions
+- Times can be typed directly (e.g. `1:23.456`) instead of dragging
+- Respects reduced-motion and light/dark preferences
 
 ---
 
 ## Legal
 
-Please respect copyright and the Terms of Service of content platforms.
-This tool is for personal, legitimate use. You are responsible for what you download.
+Please respect copyright and the Terms of Service of content platforms. This tool is for personal, legitimate use only. You are responsible for what you download.

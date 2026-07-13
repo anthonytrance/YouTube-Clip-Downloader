@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install the app the way a user would
+        run: uv tool install .
+
+      - name: Self-test (offline — ffmpeg bootstrap, synthetic clip, ffprobe checks)
+        run: ytclip --selftest
+
+      - name: Server smoke test
+        run: ytclip --smoke
+
+      # GitHub runners are datacenter IPs, which YouTube bot-walls aggressively.
+      # A failure here does NOT prove the app is broken — it proves the runner is blocked.
+      - name: Self-test (online — real tiny YouTube clip)
+        run: ytclip --selftest --online
+        continue-on-error: true

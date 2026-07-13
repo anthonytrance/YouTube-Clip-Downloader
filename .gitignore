@@ -1,5 +1,9 @@
-worker/node_modules/
-worker/.wrangler/
+__pycache__/
+*.pyc
+dist/
+build/
+*.egg-info/
+.venv/
 *.log
 .DS_Store
 Thumbs.db
