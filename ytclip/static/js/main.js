@@ -358,6 +358,7 @@
   const lanUrl    = $('lan-url');
   const lanQr     = $('lan-qr');
   const lanStatus = $('lan-status');
+  const phoneHelp = $('phone-help');
 
   async function refreshLan(post) {
     try {
@@ -371,9 +372,17 @@
         lanUrl.textContent = data.url;
         lanQr.innerHTML = data.qr_svg || '';
         lanResult.classList.remove('hidden');
-        lanToggle.textContent = 'Turn off phone access';
-        lanStatus.textContent = 'Phone access is on.';
+        if (data.external) {
+          lanToggle.classList.add('hidden');
+          phoneHelp.textContent = 'This app is already available through Tailscale Funnel. Open the secure address below on your phone, or scan the code.';
+          lanStatus.textContent = 'No private network address or additional phone-access port is being shared.';
+        } else {
+          lanToggle.classList.remove('hidden');
+          lanToggle.textContent = 'Turn off phone access';
+          lanStatus.textContent = 'Phone access is on.';
+        }
       } else {
+        lanToggle.classList.remove('hidden');
         lanResult.classList.add('hidden');
         lanToggle.textContent = 'Turn on phone access';
         lanStatus.textContent = data.enabled === false && post

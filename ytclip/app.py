@@ -121,8 +121,30 @@ def _lan_payload():
             "qr_svg": buf.getvalue().decode("utf-8"), "reachable": True}
 
 
+def _funnel_payload():
+    """Return the public Funnel URL without exposing the private LAN address."""
+    host = request.host.partition(":")[0].lower().rstrip(".")
+    if not host.endswith(".ts.net"):
+        return None
+    url = f"https://{host}"
+    import io
+
+    import qrcode
+    import qrcode.image.svg
+
+    img = qrcode.make(url, image_factory=qrcode.image.svg.SvgPathImage,
+                      box_size=14)
+    buf = io.BytesIO()
+    img.save(buf)
+    return {"enabled": True, "external": True, "url": url,
+            "qr_svg": buf.getvalue().decode("utf-8"), "reachable": True}
+
+
 @app.route("/api/lan", methods=["GET", "POST"])
 def lan():
+    funnel = _funnel_payload()
+    if funnel:
+        return jsonify(funnel)
     if request.method == "GET":
         return jsonify(_lan_payload())
     enable = bool((request.get_json(silent=True) or {}).get("enable"))
