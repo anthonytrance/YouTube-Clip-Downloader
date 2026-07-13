@@ -14,6 +14,7 @@ raises FastClipUnavailable and the caller falls back to the yt-dlp path.
 
 import struct
 import subprocess
+import sys
 import threading
 
 from curl_cffi import requests as _creq
@@ -26,6 +27,56 @@ _CHUNK = 9_000_000         # googlevideo serves ~10 MB range= chunks happily
 
 class FastClipUnavailable(Exception):
     """Raised when this path can't handle the format; caller must fall back."""
+
+
+# ---------------------------------------------------------------------------
+# Hardware encoder detection (exact cuts need a re-encode of the clip;
+# hardware encoders turn a ~25s libx264 encode into a few seconds)
+# ---------------------------------------------------------------------------
+
+_hw_encoder = [False]  # False = not probed yet; None = no hw encoder
+_hw_lock = threading.Lock()
+
+_HW_CANDIDATES = (["h264_videotoolbox"] if sys.platform == "darwin"
+                  else ["h264_nvenc", "h264_qsv", "h264_amf"])
+
+
+def _probe_encoder(ffmpeg, name):
+    r = subprocess.run(
+        [ffmpeg, "-v", "error", "-f", "lavfi", "-i",
+         "color=black:s=256x256:d=0.2,format=yuv420p",
+         "-c:v", name, "-f", "null", "-"],
+        capture_output=True, text=True, timeout=30)
+    return r.returncode == 0
+
+
+def hw_encoder(ffmpeg):
+    with _hw_lock:
+        if _hw_encoder[0] is False:
+            _hw_encoder[0] = None
+            for name in _HW_CANDIDATES:
+                try:
+                    if _probe_encoder(ffmpeg, name):
+                        _hw_encoder[0] = name
+                        break
+                except Exception:
+                    pass
+        return _hw_encoder[0]
+
+
+def _video_codec_args(ffmpeg, height, fps):
+    enc = hw_encoder(ffmpeg)
+    if not enc:
+        return ["-c:v", "libx264", "-preset", "veryfast", "-crf", "20"]
+    # Hardware encoders ignore crf; use a bitrate ladder instead.
+    h = height or 1080
+    mbps = 3 if h <= 480 else 5 if h <= 720 else 8 if h <= 1080 else 16
+    if (fps or 30) > 40:
+        mbps = int(mbps * 1.4)
+    args = ["-c:v", enc, "-b:v", f"{mbps}M", "-maxrate", f"{mbps * 2}M"]
+    if enc == "h264_videotoolbox":
+        args += ["-allow_sw", "1"]
+    return args
 
 
 def _fetch_range(url, byte_start, byte_end):
@@ -168,11 +219,16 @@ def _pick_formats(info, height_cap):
 
 
 def make_clip(info, start_s, end_s, kind, height, out_dir, ffmpeg,
-              on_progress=None):
-    """Produce an exactly-cut clip file. Returns the output file path.
+              on_progress=None, exact=True):
+    """Produce a clip file. Returns the output file path.
 
     info: the already-resolved yt-dlp info dict (with format URLs).
     kind: 'video' | 'audio' | 'mp3'.
+    exact=True re-encodes video for frame-exact boundaries. exact=False
+    stream-copies the downloaded segments untouched: bit-identical quality,
+    but the clip snaps outward to keyframe-aligned segment boundaries
+    (typically up to ~5s extra on each side). Audio is always stream-copied
+    for 'audio' (m4a) since AAC packet cuts are accurate to ~20ms anyway.
     Raises FastClipUnavailable if this path can't serve the request.
     """
     def report(pct, msg):
@@ -216,21 +272,33 @@ def make_clip(info, start_s, end_s, kind, height, out_dir, ffmpeg,
     report(55, "Cutting…")
     apath, aseg0 = parts["a"]
     cmd = [ffmpeg, "-y", "-v", "error"]
-    if kind == "video":
+    if kind == "video" and not exact:
+        # Lossless: remux the keyframe-aligned segments untouched. The clip
+        # spans whole segments, so it starts/ends a little outside the
+        # requested marks but the video bits are identical to YouTube's.
+        vpath, vseg0 = parts["v"]
+        out = out_dir / f"{safe} [{vid}] lossless.mp4"
+        cmd += ["-i", vpath, "-ss", f"{max(0, start_s - vseg0):.3f}",
+                "-i", apath,
+                "-map", "0:v:0", "-map", "1:a:0",
+                "-c", "copy", "-shortest",
+                "-movflags", "+faststart", str(out)]
+    elif kind == "video":
         vpath, vseg0 = parts["v"]
         out = out_dir / f"{safe} [{vid}].mp4"
         cmd += ["-ss", f"{start_s - vseg0:.3f}", "-i", vpath,
                 "-ss", f"{start_s - aseg0:.3f}", "-i", apath,
                 "-t", f"{duration:.3f}",
                 "-map", "0:v:0", "-map", "1:a:0",
-                "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
+                *_video_codec_args(ffmpeg, vfmt.get("height"), vfmt.get("fps")),
                 "-c:a", "aac", "-b:a", "192k",
                 "-movflags", "+faststart", str(out)]
     elif kind == "audio":
+        # Stream copy: zero quality loss; AAC packet cuts are ~20ms accurate.
         out = out_dir / f"{safe} [{vid}].m4a"
         cmd += ["-ss", f"{start_s - aseg0:.3f}", "-i", apath,
                 "-t", f"{duration:.3f}",
-                "-c:a", "aac", "-b:a", "192k", str(out)]
+                "-c:a", "copy", str(out)]
     elif kind == "mp3":
         out = out_dir / f"{safe} [{vid}].mp3"
         cmd += ["-ss", f"{start_s - aseg0:.3f}", "-i", apath,

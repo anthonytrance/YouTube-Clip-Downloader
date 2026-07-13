@@ -70,6 +70,7 @@ def clip():
             kind=kind,
             height=data.get("height"),
             container=data.get("container"),
+            exact=bool(data.get("exact", True)),
         )
         return jsonify({"job_id": job_id})
     except Exception as exc:

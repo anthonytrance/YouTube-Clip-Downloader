@@ -139,6 +139,16 @@
         <!-- Populated by JS -->
       </div>
 
+      <div class="exact-cut-row">
+        <label class="exact-cut-label">
+          <input type="checkbox" id="exact-cut" checked>
+          Frame-exact cut (re-encodes the clip)
+        </label>
+        <p class="hint">Turn off for untouched original quality; the clip then
+        starts and ends at the nearest safe cut points, usually a few seconds
+        wider than your markers.</p>
+      </div>
+
       <div class="warning-box hidden" id="long-clip-warning" role="alert">
         ⚠️ Very long clips take a while to process — the progress bar will keep you posted.
       </div>

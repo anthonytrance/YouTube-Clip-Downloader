@@ -17,6 +17,7 @@ window.Downloader = (() => {
         start_ms: Math.round(startMs),
         end_ms: Math.round(endMs),
         duration_ms: Math.round(durationMs),
+        exact: document.getElementById('exact-cut')?.checked ?? true,
       };
 
       if (format._isMp3) {

@@ -108,10 +108,33 @@ _YDL_QUIET = {
 }
 
 
-def get_info(url):
-    """Resolve metadata + a simplified format list for the frontend."""
+# Cache raw extract_info results so starting a clip right after loading a
+# video doesn't pay the (6-8s) resolve + JS-challenge cost twice. Media URLs
+# stay valid for hours; 30 minutes is comfortably safe.
+_INFO_CACHE = {}
+_INFO_CACHE_TTL = 30 * 60
+_info_cache_lock = threading.Lock()
+
+
+def _resolve_info(url):
+    import time as _time
+
+    with _info_cache_lock:
+        hit = _INFO_CACHE.get(url)
+        if hit and _time.time() - hit[0] < _INFO_CACHE_TTL:
+            return hit[1]
     with yt_dlp.YoutubeDL(dict(_YDL_QUIET, skip_download=True)) as ydl:
         info = ydl.extract_info(url, download=False)
+    with _info_cache_lock:
+        _INFO_CACHE[url] = (_time.time(), info)
+        while len(_INFO_CACHE) > 6:
+            _INFO_CACHE.pop(next(iter(_INFO_CACHE)))
+    return info
+
+
+def get_info(url):
+    """Resolve metadata + a simplified format list for the frontend."""
+    info = _resolve_info(url)
 
     raw = info.get("formats") or []
 
@@ -211,22 +234,23 @@ class Job:
         }
 
 
-def start_clip(url, start_ms, end_ms, duration_ms, kind, height=None, container=None):
+def start_clip(url, start_ms, end_ms, duration_ms, kind, height=None, container=None,
+               exact=True):
     """kind: 'video' | 'audio' | 'mp3'. Returns job id immediately."""
     job = Job()
     with _jobs_lock:
         JOBS[job.id] = job
-    args = (job, url, start_ms, end_ms, duration_ms, kind, height, container)
+    args = (job, url, start_ms, end_ms, duration_ms, kind, height, container, exact)
     threading.Thread(target=_run_job, args=args, daemon=True).start()
     return job.id
 
 
-def _run_job(job, url, start_ms, end_ms, duration_ms, kind, height, container):
+def _run_job(job, url, start_ms, end_ms, duration_ms, kind, height, container, exact):
     try:
         job.status = "running"
         job.message = "Preparing…"
         wait_for_ffmpeg()
-        if not _try_fastclip(job, url, start_ms, end_ms, duration_ms, kind, height):
+        if not _try_fastclip(job, url, start_ms, end_ms, duration_ms, kind, height, exact):
             _download(job, url, start_ms, end_ms, duration_ms, kind, height, container)
         files = [p for p in job.dir.iterdir() if p.is_file() and not p.name.endswith((".part", ".ytdl"))]
         if not files:
@@ -241,7 +265,7 @@ def _run_job(job, url, start_ms, end_ms, duration_ms, kind, height, container):
         job.message = "Failed"
 
 
-def _try_fastclip(job, url, start_ms, end_ms, duration_ms, kind, height):
+def _try_fastclip(job, url, start_ms, end_ms, duration_ms, kind, height, exact=True):
     """Attempt the fast byte-range clip path. Returns True on success,
     False to fall back to the yt-dlp section downloader (which is slow but
     handles every format)."""
@@ -251,8 +275,7 @@ def _try_fastclip(job, url, start_ms, end_ms, duration_ms, kind, height):
     if is_full or kind not in ("video", "audio", "mp3"):
         return False
     try:
-        with yt_dlp.YoutubeDL(dict(_YDL_QUIET, skip_download=True)) as ydl:
-            info = ydl.extract_info(url, download=False)
+        info = _resolve_info(url)
 
         def on_progress(pct, msg):
             job.percent = max(job.percent, pct)
@@ -260,7 +283,8 @@ def _try_fastclip(job, url, start_ms, end_ms, duration_ms, kind, height):
 
         job.filepath = fastclip.make_clip(
             info, start_ms / 1000.0, end_ms / 1000.0, kind,
-            height, job.dir, ffmpeg_path(), on_progress=on_progress)
+            height, job.dir, ffmpeg_path(), on_progress=on_progress,
+            exact=exact)
         for p in job.dir.glob("_*.part.mp4"):
             p.unlink(missing_ok=True)
         return True
