@@ -72,6 +72,8 @@ def main():
         "--collect-all", "yt_dlp_ejs",
         "--collect-all", "curl_cffi",
         "--hidden-import", "ytclip",
+        "--hidden-import", "qrcode",
+        "--hidden-import", "qrcode.image.svg",
         str(ROOT / "packaging" / "launcher.py"),
     ]
     subprocess.run(cmd, check=True)
