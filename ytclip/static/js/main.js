@@ -179,18 +179,40 @@
     if (focusMsg) announce(focusMsg);
   }
 
-  setStartBtn.addEventListener('click', () => {
+  function setStartAtPlayer() {
     const now = playerNowMs();
     if (now === null) return;
     const { endMs } = Timeline.getRange();
     applyRange(now, endMs, `Start set to ${TimeInput.format(now)}`);
-  });
+  }
 
-  setEndBtn.addEventListener('click', () => {
+  function setEndAtPlayer() {
     const now = playerNowMs();
     if (now === null) return;
     const { startMs } = Timeline.getRange();
     applyRange(startMs, now, `End set to ${TimeInput.format(now)}`);
+  }
+
+  setStartBtn.addEventListener('click', setStartAtPlayer);
+  setEndBtn.addEventListener('click', setEndAtPlayer);
+
+  // Video-editor conventions: I marks the in point and O marks the out point.
+  // Ignore shortcuts while typing, and leave modified keys to the browser/OS.
+  document.addEventListener('keydown', e => {
+    const target = e.target;
+    const typing = target instanceof HTMLElement &&
+      (target.matches('input, textarea, select') || target.isContentEditable);
+    if (typing || e.defaultPrevented || e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (videoSection.classList.contains('hidden')) return;
+
+    const key = e.key.toLowerCase();
+    if (key === 'i') {
+      e.preventDefault();
+      setStartAtPlayer();
+    } else if (key === 'o') {
+      e.preventDefault();
+      setEndAtPlayer();
+    }
   });
 
   // Nudge buttons: shift start/end by data-delta milliseconds.

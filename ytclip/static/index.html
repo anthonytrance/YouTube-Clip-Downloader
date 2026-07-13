@@ -49,22 +49,35 @@
       </div>
 
       <div class="player-controls" role="group" aria-label="Playback and clip markers">
-        <button id="playpause-btn" class="btn btn-secondary">Play</button>
-        <span id="current-time" class="current-time" aria-hidden="true">0:00.000</span>
-        <button id="set-start-btn" class="btn btn-primary">Set start here</button>
-        <button id="set-end-btn" class="btn btn-primary">Set end here</button>
+        <div class="playback-controls">
+          <button id="playpause-btn" class="btn btn-secondary">Play</button>
+          <span id="current-time" class="current-time" aria-hidden="true">0:00.000</span>
+        </div>
+        <div class="marker-controls">
+          <button id="set-start-btn" class="btn btn-primary"
+                  aria-keyshortcuts="I" aria-label="Set start here, keyboard shortcut I"
+                  title="Set start at the current position (I)">
+            Set start here <kbd class="shortcut-key" aria-hidden="true">I</kbd>
+          </button>
+          <button id="set-end-btn" class="btn btn-primary"
+                  aria-keyshortcuts="O" aria-label="Set end here, keyboard shortcut O"
+                  title="Set end at the current position (O)">
+            Set end here <kbd class="shortcut-key" aria-hidden="true">O</kbd>
+          </button>
+        </div>
       </div>
     </section>
 
     <!-- ── TIMELINE ───────────────────────────────────────────── -->
     <section class="card hidden" id="clip-section" aria-label="Clip range selection">
       <h2 class="section-heading">Select clip range</h2>
+      <p class="hint timeline-help">Drag S for start and E for end, or tap the timeline to move the nearest marker.</p>
 
       <div class="timeline-container" id="timeline-container" role="group" aria-label="Clip timeline">
-        <div class="timeline-track" id="timeline-track" aria-hidden="true">
+        <div class="timeline-track" id="timeline-track">
           <div class="timeline-range" id="timeline-range"></div>
           <button
-            class="timeline-handle" id="handle-start"
+            class="timeline-handle timeline-handle-start" id="handle-start"
             role="slider"
             aria-label="Clip start"
             aria-valuemin="0"
@@ -72,9 +85,9 @@
             aria-valuenow="0"
             aria-orientation="horizontal"
             tabindex="0"
-          ></button>
+          ><span aria-hidden="true">S</span></button>
           <button
-            class="timeline-handle" id="handle-end"
+            class="timeline-handle timeline-handle-end" id="handle-end"
             role="slider"
             aria-label="Clip end"
             aria-valuemin="0"
@@ -82,7 +95,7 @@
             aria-valuenow="100"
             aria-orientation="horizontal"
             tabindex="0"
-          ></button>
+          ><span aria-hidden="true">E</span></button>
         </div>
       </div>
 

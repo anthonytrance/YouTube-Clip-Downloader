@@ -219,6 +219,11 @@ body {
 /* ── Timeline ───────────────────────────────────────────────── */
 .timeline-container {
   margin-bottom: 1.25rem;
+  padding-inline: 32px;
+}
+
+.timeline-help {
+  margin: -.65rem 0 .85rem;
 }
 
 .timeline-track {
@@ -244,16 +249,23 @@ body {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 18px;
-  height: 34px;
+  width: 32px;
+  height: 38px;
   background: var(--color-primary);
+  color: #fff;
   border: none;
   border-radius: 5px;
+  font-size: .72rem;
+  font-weight: 800;
+  line-height: 1;
   cursor: grab;
   transition: background var(--transition);
   touch-action: none;
-  min-height: 34px;
+  min-height: 38px;
 }
+
+.timeline-handle-start { transform: translate(-100%, -50%); }
+.timeline-handle-end { transform: translate(0, -50%); }
 
 .timeline-handle:hover,
 .timeline-handle:focus-visible {
@@ -268,12 +280,13 @@ body {
 @media (hover: none) {
   /* Bigger handles on touch devices */
   .timeline-handle {
-    width: 24px;
-    height: 44px;
+    width: 44px;
+    height: 48px;
   }
   .timeline-track {
-    height: 52px;
+    height: 56px;
   }
+  .timeline-container { padding-inline: 44px; }
 }
 
 /* ── Time inputs ────────────────────────────────────────────── */
@@ -471,6 +484,10 @@ body {
   #time-hint { grid-column: auto; }
   .url-row { flex-direction: column; }
   .url-row .btn { width: 100%; }
+  .url-input, .time-input { font-size: 1rem; }
+  .player-controls, .playback-controls, .marker-controls { width: 100%; }
+  .playback-controls { justify-content: space-between; }
+  .marker-controls .btn { flex: 1; padding-inline: .65rem; }
 }
 
 /* ── Player controls & clip markers ─────────────────────────── */
@@ -480,6 +497,23 @@ body {
   align-items: center;
   gap: 0.75rem;
   margin-top: 0.75rem;
+}
+.playback-controls,
+.marker-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.shortcut-key {
+  min-width: 1.45rem;
+  padding: .05rem .35rem;
+  border: 1px solid rgba(255, 255, 255, .65);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, .16);
+  color: inherit;
+  font: inherit;
+  font-size: .75rem;
+  line-height: 1.35;
 }
 .current-time {
   font-variant-numeric: tabular-nums;
@@ -492,9 +526,12 @@ body {
   margin-top: 0.35rem;
 }
 .btn-nudge {
+  flex: 1;
+  min-width: 0;
   padding: 0.3rem 0.55rem;
   font-size: 0.85rem;
   background: var(--color-surface, #f2f2f2);
+  color: var(--color-text);
   border: 1px solid var(--color-border, #ccc);
   border-radius: 6px;
   cursor: pointer;
@@ -512,3 +549,4 @@ body {
 .exact-cut-row { margin: 0.6rem 0; }
 .exact-cut-label { display: inline-flex; align-items: center; gap: 0.4rem;
                    font-weight: 600; }
+.exact-cut-label input { width: 18px; height: 18px; }

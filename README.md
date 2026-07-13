@@ -38,8 +38,10 @@ terminal window that appears alongside stops the app.
 1. Paste a YouTube link and press Load.
 2. The video appears with a player. Play it.
 3. At the moment your clip should begin, press "Set start here".
-   At the end, press "Set end here". Fine-tune with the plus and minus
-   buttons (1 second and 0.1 second steps), or type exact times.
+   At the end, press "Set end here". You can also press `I` for the start
+   point and `O` for the end point while you are not typing. Fine-tune with
+   the plus and minus buttons (1 second and 0.1 second steps), drag the S and
+   E timeline markers, or type exact times.
 4. Press "Preview clip" to hear/see exactly what you selected.
 5. Pick a format:
    - Video (choose a resolution)

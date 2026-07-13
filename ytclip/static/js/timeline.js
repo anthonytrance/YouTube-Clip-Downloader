@@ -15,6 +15,7 @@ window.Timeline = (() => {
     _onChange = onChange;
     _bindHandle(_handleStart, 'start');
     _bindHandle(_handleEnd, 'end');
+    _bindTrack();
     _bindKeyboard(_handleStart, 'start');
     _bindKeyboard(_handleEnd, 'end');
   }
@@ -98,6 +99,23 @@ window.Timeline = (() => {
       document.removeEventListener('touchmove', onTouchMove);
       document.removeEventListener('touchend', onTouchEnd);
     };
+  }
+
+  function _bindTrack() {
+    _track.addEventListener('click', e => {
+      // Handle clicks finish a drag and must not also reposition a marker.
+      if (e.target !== _track) return;
+      const rect = _track.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const ms = _pctToMs(pct);
+      if (Math.abs(ms - _startMs) <= Math.abs(ms - _endMs)) {
+        _startMs = Math.max(0, Math.min(ms, _endMs - 100));
+      } else {
+        _endMs = Math.min(_duration, Math.max(ms, _startMs + 100));
+      }
+      _render();
+      _onChange?.(_startMs, _endMs);
+    });
   }
 
   function _bindKeyboard(handle, which) {
