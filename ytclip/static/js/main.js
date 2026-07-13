@@ -129,21 +129,102 @@
     longWarn.classList.toggle('hidden', !Downloader.isLongClip(startMs, endMs));
   }
 
-  // ── Preview ────────────────────────────────────────────────
-  previewBtn.addEventListener('click', () => {
-    const { startMs, endMs } = Timeline.getRange();
+  // ── Playback controls + clip markers ──────────────────────
+  const playPauseBtn = $('playpause-btn');
+  const currentTimeEl = $('current-time');
+  const setStartBtn  = $('set-start-btn');
+  const setEndBtn    = $('set-end-btn');
+  const markerAnnounce = $('marker-announce');
+
+  playPauseBtn.addEventListener('click', () => {
     if (!ytPlayer) return;
-    clearInterval(previewInterval);
+    // YT.PlayerState.PLAYING = 1
+    if (ytPlayer.getPlayerState?.() === 1) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
+  });
+
+  setInterval(() => {
+    if (!ytPlayer?.getCurrentTime) return;
+    currentTimeEl.textContent = TimeInput.format(ytPlayer.getCurrentTime() * 1000);
+    const playing = ytPlayer.getPlayerState?.() === 1;
+    playPauseBtn.textContent = playing ? 'Pause' : 'Play';
+  }, 250);
+
+  function playerNowMs() {
+    const t = ytPlayer?.getCurrentTime?.();
+    return typeof t === 'number' ? Math.round(t * 1000) : null;
+  }
+
+  function announce(msg) { markerAnnounce.textContent = msg; }
+
+  function applyRange(startMs, endMs, focusMsg) {
+    const dur = (videoInfo?.duration ?? 0) * 1000;
+    startMs = Math.max(0, Math.min(startMs, dur));
+    endMs   = Math.max(0, Math.min(endMs, dur));
+    if (endMs <= startMs) endMs = Math.min(dur, startMs + 1000);
+    Timeline.setRange(startMs, endMs);
+    startInput.value = TimeInput.format(startMs);
+    endInput.value   = TimeInput.format(endMs);
+    updateClipMeta(startMs, endMs);
+    if (focusMsg) announce(focusMsg);
+  }
+
+  setStartBtn.addEventListener('click', () => {
+    const now = playerNowMs();
+    if (now === null) return;
+    const { endMs } = Timeline.getRange();
+    applyRange(now, endMs, `Start set to ${TimeInput.format(now)}`);
+  });
+
+  setEndBtn.addEventListener('click', () => {
+    const now = playerNowMs();
+    if (now === null) return;
+    const { startMs } = Timeline.getRange();
+    applyRange(startMs, now, `End set to ${TimeInput.format(now)}`);
+  });
+
+  // Nudge buttons: shift start/end by data-delta milliseconds.
+  document.querySelectorAll('.btn-nudge').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const delta = parseInt(btn.dataset.delta, 10);
+      let { startMs, endMs } = Timeline.getRange();
+      if (btn.dataset.target === 'start') {
+        startMs += delta;
+        applyRange(startMs, endMs, `Start ${TimeInput.format(Math.max(0, startMs))}`);
+      } else {
+        endMs += delta;
+        applyRange(startMs, endMs, `End ${TimeInput.format(Math.max(0, endMs))}`);
+      }
+    });
+  });
+
+  // ── Preview (toggles) ──────────────────────────────────────
+  previewBtn.addEventListener('click', () => {
+    if (!ytPlayer) return;
+    if (previewInterval) {            // second press stops the preview
+      stopPreview();
+      return;
+    }
+    const { startMs, endMs } = Timeline.getRange();
     ytPlayer.seekTo(startMs / 1000, true);
     ytPlayer.playVideo();
+    previewBtn.textContent = 'Stop preview';
     previewInterval = setInterval(() => {
       if (!ytPlayer) return;
+      const bounds = Timeline.getRange();
       const current = ytPlayer.getCurrentTime?.() * 1000;
-      if (current >= endMs) {
-        ytPlayer.seekTo(startMs / 1000, true);
+      if (current >= bounds.endMs) {
+        ytPlayer.seekTo(bounds.startMs / 1000, true);
       }
     }, 250);
   });
+
+  function stopPreview() {
+    clearInterval(previewInterval);
+    previewInterval = null;
+    previewBtn.textContent = 'Preview clip';
+    ytPlayer?.pauseVideo?.();
+  }
 
   function syncPreviewLoop(startMs, endMs) {
     // If preview is running, update its bounds
@@ -161,7 +242,7 @@
     downloadBtn.disabled = true;
     clearError();
     Progress.show('Starting…');
-    clearInterval(previewInterval);
+    stopPreview();
 
     await Downloader.run({
       format:     fmt,
@@ -234,9 +315,14 @@
     try {
       const u = new URL(url);
       if (u.hostname === 'youtu.be') return u.pathname.slice(1).split(/[?#]/)[0];
-      if (u.hostname.endsWith('youtube.com')) return u.searchParams.get('v') || null;
+      if (u.hostname.endsWith('youtube.com')) {
+        const path = u.pathname;
+        const m = path.match(/^\/(?:shorts|live|embed)\/([a-zA-Z0-9_-]{11})/);
+        if (m) return m[1];
+        return u.searchParams.get('v') || null;
+      }
     } catch {}
-    const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    const m = url.match(/(?:v=|youtu\.be\/|\/shorts\/|\/live\/)([a-zA-Z0-9_-]{11})/);
     return m ? m[1] : null;
   }
 })();

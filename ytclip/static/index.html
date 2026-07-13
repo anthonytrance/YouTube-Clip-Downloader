@@ -47,6 +47,13 @@
       <div class="embed-wrapper" id="embed-wrapper">
         <div id="yt-player"></div>
       </div>
+
+      <div class="player-controls" role="group" aria-label="Playback and clip markers">
+        <button id="playpause-btn" class="btn btn-secondary">Play</button>
+        <span id="current-time" class="current-time" aria-hidden="true">0:00.000</span>
+        <button id="set-start-btn" class="btn btn-primary">Set start here</button>
+        <button id="set-end-btn" class="btn btn-primary">Set end here</button>
+      </div>
     </section>
 
     <!-- ── TIMELINE ───────────────────────────────────────────── -->
@@ -90,6 +97,12 @@
             aria-describedby="time-hint"
             autocomplete="off"
           >
+          <div class="nudge-row" role="group" aria-label="Adjust start time">
+            <button class="btn btn-nudge" data-target="start" data-delta="-1000" aria-label="Start back 1 second">−1s</button>
+            <button class="btn btn-nudge" data-target="start" data-delta="-100" aria-label="Start back 0.1 second">−0.1s</button>
+            <button class="btn btn-nudge" data-target="start" data-delta="100" aria-label="Start forward 0.1 second">+0.1s</button>
+            <button class="btn btn-nudge" data-target="start" data-delta="1000" aria-label="Start forward 1 second">+1s</button>
+          </div>
         </div>
         <div class="time-input-group">
           <label for="end-input" class="label">End</label>
@@ -101,6 +114,12 @@
             aria-describedby="time-hint"
             autocomplete="off"
           >
+          <div class="nudge-row" role="group" aria-label="Adjust end time">
+            <button class="btn btn-nudge" data-target="end" data-delta="-1000" aria-label="End back 1 second">−1s</button>
+            <button class="btn btn-nudge" data-target="end" data-delta="-100" aria-label="End back 0.1 second">−0.1s</button>
+            <button class="btn btn-nudge" data-target="end" data-delta="100" aria-label="End forward 0.1 second">+0.1s</button>
+            <button class="btn btn-nudge" data-target="end" data-delta="1000" aria-label="End forward 1 second">+1s</button>
+          </div>
         </div>
         <p id="time-hint" class="hint">Format: H:MM:SS.mmm — e.g. 1:23 or 1:23.456</p>
       </div>
@@ -109,6 +128,7 @@
         <button id="preview-btn" class="btn btn-secondary">Preview clip</button>
         <span id="clip-duration-label" class="clip-duration" aria-live="polite"></span>
       </div>
+      <div id="marker-announce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
     </section>
 
     <!-- ── FORMAT PICKER ─────────────────────────────────────── -->
