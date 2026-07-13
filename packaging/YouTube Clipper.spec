@@ -3,7 +3,7 @@ from PyInstaller.utils.hooks import collect_all
 
 datas = [('C:\\Users\\Anthony\\codetest\\YouTube-Clip-Downloader\\ytclip\\static', 'ytclip/static')]
 binaries = []
-hiddenimports = ['ytclip']
+hiddenimports = ['ytclip', 'qrcode', 'qrcode.image.svg']
 tmp_ret = collect_all('yt_dlp_ejs')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 tmp_ret = collect_all('curl_cffi')
