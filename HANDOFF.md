@@ -1,6 +1,75 @@
 # YouTube Clipper project handoff
 
-Status: 2026-07-13
+Status: 2026-07-13 (evening update below supersedes the morning plan where they conflict)
+
+## 0. 2026-07-13 evening: decisions made and work landed
+
+Anthony decided: desktop-first. The recipient has a Mac (build for Windows too),
+unsigned builds for now (no Apple Developer account yet), the a-Shell iPhone
+route stays documented as a later upgrade (see section 0.4).
+
+### 0.1 Landed today (all committed, all verified on this machine)
+
+1. **JS challenge solver fixed** — yt-dlp upgraded 2026.03.17 → 2026.07.04,
+   `yt-dlp-ejs` installed, node enabled as runtime alongside deno
+   (`js_runtimes` in `engine.py`). Without this, YouTube deprecates
+   extraction and hides/throttles formats.
+2. **fastclip** (`ytclip/fastclip.py`) — the slow-clip problem is solved.
+   yt-dlp's `--download-sections` hands URLs to the ffmpeg downloader whose
+   scattered Range reads collapse to 7–120 KB/s against googlevideo, while
+   the server serves big `range=` URL-param requests at 10–13 MB/s
+   (measured both ways with curl). fastclip parses the DASH MP4 sidx index,
+   downloads only the needed byte spans, cuts exactly with local ffmpeg.
+   Correctness proven with SSIM 0.983 against a ground-truth cut from a
+   fully downloaded file. Engine falls back to the yt-dlp path on any
+   `FastClipUnavailable`. Shorts edge case handled (googlevideo returns
+   400, not a short read, for `range=` past EOF — clamp to filesize).
+3. **Gate 1 passed completely**, ffprobe-verified: 1080p60 mid-video merge
+   28s; 720p near-end 14s; 30s clip from the middle of a 2-hour set 22s
+   (without downloading the 2 hours); m4a 6s; mp3 320k 6s; a Short 6s.
+4. **Marker UI** — Play/Pause + live time readout under the embedded
+   player, "Set start here"/"Set end here", ±1s/±0.1s nudge rows with
+   aria-labels, preview toggle, polite live-region announcements,
+   /shorts//live//embed URL support. Verified with a Playwright e2e run
+   against real YouTube: 10/10 checks, ending in a real browser download
+   of an exactly 7.00s MP3.
+5. **Packaging** — `packaging/build.py` produces a portable one-folder app
+   (PyInstaller) bundling ffmpeg/ffprobe and Deno in `bin/`;
+   `engine.bundle_bin_dir()` wires them up when frozen. The frozen Windows
+   exe served an 8s 720p merged clip in 14s through its HTTP API.
+   136 MB zip. `.github/workflows/package.yml` builds mac-arm64, mac-intel
+   and windows artifacts with a frozen `--smoke` gate.
+
+### 0.2 Blocked on Anthony (as of this update)
+
+The gh token lacks the `workflow` scope, so pushing `.github/workflows/*`
+is rejected. A device-flow refresh was started; Anthony must enter the
+one-time code at https://github.com/login/device. Then: `git push origin
+main`, run the Package workflow, download the mac artifacts.
+
+### 0.3 Next steps in order
+
+1. Push to GitHub after the scope refresh, trigger Package workflow.
+2. Verify the mac-arm64 artifact at least boots via the CI smoke gate
+   (already part of the workflow). Real double-click test needs her Mac.
+3. Send Anthony the setup note (docs/setup-note.md) to forward.
+4. Later upgrades: signing/notarization (99 USD/yr), the a-Shell iPhone
+   route (section 0.4), LAN mode instructions for phone use at home.
+
+### 0.4 iPhone route research (2026-07-13, for later)
+
+yt-dlp runs on-device in a-Shell (App Store terminal, Python 3.11).
+yt-dlp's JS-runtime requirement is solved there by the pure-Python plugin
+`yt-dlp-apple-webkit-jsi` (github.com/grqz/yt-dlp-apple-webkit-jsi), which
+uses Apple WebKit as the challenge solver; confirmed working inside
+a-Shell by multiple users Nov–Dec 2025 (holzschu/a-shell issue 962, logs
+in-thread). Shortcuts integration means the user never sees the terminal.
+Unproven: exact clipping (`--download-sections` + merge) inside a-Shell,
+memory limits, PO-token-gated formats. One-hour probe on a physical
+iPhone decides it. Note fastclip's approach (sidx + range= + local ffmpeg
+cut) would work on iOS too since a-Shell bundles ffmpeg.
+
+
 
 This is the current handoff for the project. It supersedes `PLAN.md` and old README architecture claims wherever they conflict. It records what was actually tried, what failed, what remains plausible, and what the next agent should test before building a full product.
 
