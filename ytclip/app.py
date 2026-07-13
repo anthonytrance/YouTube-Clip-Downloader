@@ -237,31 +237,46 @@ def main(argv=None):
     local_url = f"http://127.0.0.1:{args.port}"
 
     if args.smoke:
-        threading.Thread(
-            target=lambda: app.run(host=host, port=args.port, threaded=True, use_reloader=False),
-            daemon=True,
-        ).start()
+        from werkzeug.serving import make_server
+
+        try:
+            smoke_server = make_server(host, args.port, app, threaded=True)
+        except OSError:
+            if args.port != 8574:
+                raise
+            # A developer may already have the normal app running. An
+            # ephemeral port still exercises a real local HTTP server.
+            smoke_server = make_server(host, 0, app, threaded=True)
+        smoke_port = smoke_server.server_port
+        smoke_thread = threading.Thread(target=smoke_server.serve_forever, daemon=True)
+        smoke_thread.start()
         import time
         deadline = time.time() + 30
-        while time.time() < deadline:
-            conn = None
-            try:
-                # Bypass HTTP_PROXY settings on CI runners. This probe must
-                # always connect directly to the server in this process.
-                conn = http.client.HTTPConnection("127.0.0.1", args.port, timeout=3)
-                conn.request("GET", "/api/health")
-                resp = conn.getresponse()
-                payload = json.loads(resp.read())
-                if resp.status == 200 and payload.get("ok"):
-                    print(f"SMOKE OK: {payload}")
-                    return 0
-            except Exception:
-                time.sleep(0.5)
-            finally:
-                if conn:
-                    conn.close()
-        print("SMOKE FAILED: server did not become healthy within 30s")
-        return 1
+        last_error = None
+        try:
+            while time.time() < deadline:
+                conn = None
+                try:
+                    # Bypass HTTP_PROXY settings on CI runners. This probe
+                    # always connects directly to the server in this process.
+                    conn = http.client.HTTPConnection("127.0.0.1", smoke_port, timeout=3)
+                    conn.request("GET", "/api/health")
+                    resp = conn.getresponse()
+                    payload = json.loads(resp.read())
+                    if resp.status == 200 and payload.get("ok"):
+                        print(f"SMOKE OK: {payload}")
+                        return 0
+                except Exception as exc:
+                    last_error = exc
+                    time.sleep(0.5)
+                finally:
+                    if conn:
+                        conn.close()
+            print(f"SMOKE FAILED: server did not become healthy within 30s ({last_error!r})")
+            return 1
+        finally:
+            smoke_server.shutdown()
+            smoke_thread.join(timeout=5)
 
     print()
     print("  YouTube Clip Downloader is running.")
