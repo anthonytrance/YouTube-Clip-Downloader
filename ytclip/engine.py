@@ -57,7 +57,15 @@ def ffmpeg_path(tool="ffmpeg"):
 # Video info
 # ---------------------------------------------------------------------------
 
-_YDL_QUIET = {"quiet": True, "no_warnings": True, "noplaylist": True}
+# js_runtimes: yt-dlp only enables deno by default; also allow node so the
+# JS challenge solver works on machines that have either. Without a runtime
+# YouTube serves throttled/missing formats.
+_YDL_QUIET = {
+    "quiet": True,
+    "no_warnings": True,
+    "noplaylist": True,
+    "js_runtimes": {"deno": {}, "node": {}},
+}
 
 
 def get_info(url):
@@ -178,7 +186,8 @@ def _run_job(job, url, start_ms, end_ms, duration_ms, kind, height, container):
         job.status = "running"
         job.message = "Preparing…"
         wait_for_ffmpeg()
-        _download(job, url, start_ms, end_ms, duration_ms, kind, height, container)
+        if not _try_fastclip(job, url, start_ms, end_ms, duration_ms, kind, height):
+            _download(job, url, start_ms, end_ms, duration_ms, kind, height, container)
         files = [p for p in job.dir.iterdir() if p.is_file() and not p.name.endswith((".part", ".ytdl"))]
         if not files:
             raise RuntimeError("Download finished but no output file was produced")
@@ -190,6 +199,35 @@ def _run_job(job, url, start_ms, end_ms, duration_ms, kind, height, container):
         job.status = "error"
         job.error = _friendly_error(str(exc))
         job.message = "Failed"
+
+
+def _try_fastclip(job, url, start_ms, end_ms, duration_ms, kind, height):
+    """Attempt the fast byte-range clip path. Returns True on success,
+    False to fall back to the yt-dlp section downloader (which is slow but
+    handles every format)."""
+    from . import fastclip
+
+    is_full = start_ms <= 0 and (duration_ms <= 0 or end_ms >= duration_ms - 500)
+    if is_full or kind not in ("video", "audio", "mp3"):
+        return False
+    try:
+        with yt_dlp.YoutubeDL(dict(_YDL_QUIET, skip_download=True)) as ydl:
+            info = ydl.extract_info(url, download=False)
+
+        def on_progress(pct, msg):
+            job.percent = max(job.percent, pct)
+            job.message = msg
+
+        job.filepath = fastclip.make_clip(
+            info, start_ms / 1000.0, end_ms / 1000.0, kind,
+            height, job.dir, ffmpeg_path(), on_progress=on_progress)
+        for p in job.dir.glob("_*.part.mp4"):
+            p.unlink(missing_ok=True)
+        return True
+    except fastclip.FastClipUnavailable:
+        job.message = "Retrying with fallback downloader…"
+        job.percent = 0
+        return False
 
 
 def _download(job, url, start_ms, end_ms, duration_ms, kind, height, container):
@@ -221,6 +259,7 @@ def _download(job, url, start_ms, end_ms, duration_ms, kind, height, container):
         "postprocessor_hooks": [pp_hook],
         "retries": 3,
         "fragment_retries": 5,
+        "concurrent_fragment_downloads": 6,
     })
 
     if not is_full:

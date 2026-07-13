@@ -11,8 +11,10 @@ requires-python = ">=3.9"
 license = { text = "MIT" }
 dependencies = [
     "yt-dlp",
+    "yt-dlp-ejs",
     "flask>=3.0",
     "static-ffmpeg>=2.5",
+    "curl_cffi>=0.7",
 ]
 
 [project.scripts]
