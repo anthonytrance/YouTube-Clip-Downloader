@@ -33,6 +33,8 @@ def index():
 
 @app.route("/api/health")
 def health():
+    if _public_access_url():
+        return jsonify({"ok": True})
     import yt_dlp.version
     return jsonify({
         "ok": True,
@@ -122,12 +124,21 @@ def _lan_payload():
             "qr_svg": buf.getvalue().decode("utf-8"), "reachable": True}
 
 
-def _funnel_payload():
-    """Return the public Funnel URL without exposing the private LAN address."""
+def _public_access_url():
+    configured = app.config.get("YTCLIP_PUBLIC_URL")
+    if configured:
+        return configured
     host = request.host.partition(":")[0].lower().rstrip(".")
     if not host.endswith(".ts.net"):
         return None
-    url = f"https://{host}"
+    return f"https://{host}"
+
+
+def _public_phone_payload():
+    """Return the configured public URL without exposing private networking."""
+    url = _public_access_url()
+    if not url:
+        return None
     import io
 
     import qrcode
@@ -143,9 +154,9 @@ def _funnel_payload():
 
 @app.route("/api/lan", methods=["GET", "POST"])
 def lan():
-    funnel = _funnel_payload()
-    if funnel:
-        return jsonify(funnel)
+    public = _public_phone_payload()
+    if public:
+        return jsonify(public)
     if request.method == "GET":
         return jsonify(_lan_payload())
     enable = bool((request.get_json(silent=True) or {}).get("enable"))
@@ -216,6 +227,7 @@ def main(argv=None):
     parser.add_argument("--lan", action="store_true",
                         help="also allow other devices on your home network (e.g. your phone) to connect")
     parser.add_argument("--no-browser", action="store_true", help="don't open the browser automatically")
+    parser.add_argument("--public-url", help="public reverse-proxy address shown in the phone QR code")
     parser.add_argument("--selftest", action="store_true",
                         help="verify the install: ffmpeg + clipping machinery (offline)")
     parser.add_argument("--online", action="store_true",
@@ -229,7 +241,10 @@ def main(argv=None):
         sys.exit(selftest.run(online=args.online))
 
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
+    if args.public_url and not args.public_url.startswith(("https://", "http://")):
+        parser.error("--public-url must start with https:// or http://")
     app.config["YTCLIP_PORT"] = args.port
+    app.config["YTCLIP_PUBLIC_URL"] = args.public_url.rstrip("/") if args.public_url else None
     engine.ensure_ffmpeg_async()
     threading.Thread(target=_check_ytdlp_update, daemon=True).start()
 

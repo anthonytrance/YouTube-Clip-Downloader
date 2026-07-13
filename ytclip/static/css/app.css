@@ -488,6 +488,7 @@ body {
   .player-controls, .playback-controls, .marker-controls { width: 100%; }
   .playback-controls { justify-content: space-between; }
   .marker-controls .btn { flex: 1; padding-inline: .65rem; }
+  #phone-section { display: none; }
 }
 
 /* ── Player controls & clip markers ─────────────────────────── */

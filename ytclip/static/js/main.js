@@ -374,8 +374,8 @@
         lanResult.classList.remove('hidden');
         if (data.external) {
           lanToggle.classList.add('hidden');
-          phoneHelp.textContent = 'This app is already available through Tailscale Funnel. Open the secure address below on your phone, or scan the code.';
-          lanStatus.textContent = 'No private network address or additional phone-access port is being shared.';
+          phoneHelp.textContent = 'Open the secure address below on your phone, or scan the code.';
+          lanStatus.textContent = '';
         } else {
           lanToggle.classList.remove('hidden');
           lanToggle.textContent = 'Turn off phone access';

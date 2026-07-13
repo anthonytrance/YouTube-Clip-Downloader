@@ -93,7 +93,7 @@ clipper or close the app.
 ## For developers
 
 Python 3.9+. `pip install .` then `ytclip`. Useful flags: `--port`,
-`--no-browser`, `--lan`, `--selftest [--online]`, `--smoke`.
+`--no-browser`, `--lan`, `--public-url`, `--selftest [--online]`, `--smoke`.
 `packaging/build.py` produces the portable builds (PyInstaller, bundles
 ffmpeg and Deno). Architecture and history: see `HANDOFF.md` and
 `PLAN.md`. CI runs install + selftest on macOS and Windows; the Package
