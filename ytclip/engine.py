@@ -1,9 +1,11 @@
 """yt-dlp wrapper: video info, clip jobs, progress tracking."""
 
 import atexit
+import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 import uuid
@@ -13,7 +15,33 @@ import yt_dlp
 from yt_dlp.utils import download_range_func
 
 # ---------------------------------------------------------------------------
-# ffmpeg bootstrap (static-ffmpeg downloads real binaries on first use)
+# Bundled binaries (portable builds ship bin/ next to the executable)
+# ---------------------------------------------------------------------------
+
+
+def bundle_bin_dir():
+    """Return the portable build's bin directory, or None when running from
+    source. PyInstaller builds place ffmpeg/ffprobe/deno in <app dir>/bin."""
+    if getattr(sys, "frozen", False):
+        candidate = Path(sys.executable).parent / "bin"
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def bundled_deno():
+    d = bundle_bin_dir()
+    if d:
+        for name in ("deno.exe", "deno"):
+            p = d / name
+            if p.exists():
+                return str(p)
+    return None
+
+
+# ---------------------------------------------------------------------------
+# ffmpeg bootstrap (bundled if present, else static-ffmpeg downloads on
+# first use)
 # ---------------------------------------------------------------------------
 
 _ffmpeg_ready = threading.Event()
@@ -23,6 +51,12 @@ _ffmpeg_error = [None]
 def ensure_ffmpeg_async():
     """Kick off the (possibly slow, first-run-only) ffmpeg download in the
     background so server startup stays instant. Jobs wait on the event."""
+
+    bin_dir = bundle_bin_dir()
+    if bin_dir and (bin_dir / ("ffmpeg.exe" if os.name == "nt" else "ffmpeg")).exists():
+        os.environ["PATH"] = str(bin_dir) + os.pathsep + os.environ.get("PATH", "")
+        _ffmpeg_ready.set()
+        return
 
     def _worker():
         try:
@@ -59,12 +93,18 @@ def ffmpeg_path(tool="ffmpeg"):
 
 # js_runtimes: yt-dlp only enables deno by default; also allow node so the
 # JS challenge solver works on machines that have either. Without a runtime
-# YouTube serves throttled/missing formats.
+# YouTube serves throttled/missing formats. Portable builds ship deno in
+# bin/ and point yt-dlp straight at it.
+def _js_runtimes():
+    deno = bundled_deno()
+    return {"deno": {"path": deno} if deno else {}, "node": {}}
+
+
 _YDL_QUIET = {
     "quiet": True,
     "no_warnings": True,
     "noplaylist": True,
-    "js_runtimes": {"deno": {}, "node": {}},
+    "js_runtimes": _js_runtimes(),
 }
 
 

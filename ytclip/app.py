@@ -102,7 +102,11 @@ def _check_ytdlp_update():
         current = yt_dlp.version.__version__
         with urllib.request.urlopen("https://pypi.org/pypi/yt-dlp/json", timeout=15) as resp:
             latest = json.load(resp)["info"]["version"]
-        if latest != current:
+
+        def _ver(v):
+            return tuple(int(p) for p in v.split(".") if p.isdigit())
+
+        if _ver(latest) > _ver(current):
             _update_available[0] = latest
             print(f"\n  A newer yt-dlp is available ({current} -> {latest}).")
             print("  To update, run:  uv tool upgrade yt-clip-downloader\n")

@@ -1,0 +1,53 @@
+name: Package
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest        # Apple Silicon
+            label: mac-arm64
+          - os: macos-13            # Intel
+            label: mac-intel
+          - os: windows-latest
+            label: windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install app + build tools
+        run: |
+          python -m pip install -U pip
+          python -m pip install . pyinstaller
+
+      - name: Self-test (offline)
+        run: python -m ytclip.app --selftest
+
+      - name: Build portable app
+        run: python packaging/build.py
+
+      - name: Smoke-test the frozen build (macOS/Linux)
+        if: runner.os != 'Windows'
+        run: "./dist/YouTube Clipper/YouTube Clipper" --smoke
+
+      - name: Smoke-test the frozen build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & ".\dist\YouTube Clipper\YouTube Clipper.exe" --smoke
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YouTube-Clipper-${{ matrix.label }}
+          path: dist/YouTube-Clipper-*.zip
+          if-no-files-found: error
