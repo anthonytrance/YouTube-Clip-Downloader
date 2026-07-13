@@ -13,12 +13,24 @@ route stays documented as a later upgrade (see section 0.4).
 - Release 2.1.0 is live on GitHub with Windows, Mac Apple Silicon, and Mac
   Intel downloads. The GitHub Pages landing page and friendly README are live.
 - The portable Windows zip was also uploaded to `/Djpitch trance` in Dropbox.
-- Release 2.1.1 is live as the latest GitHub release. Its Windows, Mac Apple
+- Release 2.1.1 was published with Windows, Mac Apple
   Silicon, and Mac Intel frozen builds all passed CI self-tests and smoke tests.
   The Dropbox Windows copy was also replaced with 2.1.1.
 - Version 2.1.1 fixes two bugs found during Anthony's local test: Preview now
   explicitly unmutes the YouTube player and announces playback, and format
   sizes are estimates for the selected clip rather than the entire source.
+- Release 2.2.0 is now the latest GitHub release, with freshly built Windows,
+  Mac Apple Silicon, and Mac Intel archives. All package self-tests and frozen
+  smoke tests passed, and the general Windows and Mac CI passed its offline and
+  online clip tests. The Dropbox Windows copy was replaced with 2.2.0.
+- Version 2.2.0 polishes the responsive desktop and phone layouts, fixes the
+  light-theme time-nudge controls, separates and enlarges the S/E timeline
+  handles, adds tap-to-move and I/O marker shortcuts, and keeps shortcuts out
+  of time-entry fields.
+- When the app is reached through Tailscale Funnel, the phone section now shows
+  the public HTTPS Funnel name instead of the private Wi-Fi address and does not
+  open the extra LAN listener. The current detached public instance is served at
+  `https://homeserv.tailc30d25.ts.net` through local port 8574.
   The source also passed a real-YouTube Playwright check covering preview
   playback, live-region feedback, and duration-scaled file-size estimates.
 
