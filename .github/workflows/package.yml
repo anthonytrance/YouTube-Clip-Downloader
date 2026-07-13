@@ -38,7 +38,8 @@ jobs:
 
       - name: Smoke-test the frozen build (macOS/Linux)
         if: runner.os != 'Windows'
-        run: "./dist/YouTube Clipper/YouTube Clipper" --smoke
+        run: |
+          "./dist/YouTube Clipper/YouTube Clipper" --smoke
 
       - name: Smoke-test the frozen build (Windows)
         if: runner.os == 'Windows'
