@@ -1,6 +1,7 @@
 """Flask server + command-line entry point."""
 
 import argparse
+import http.client
 import json
 import logging
 import socket
@@ -243,14 +244,22 @@ def main(argv=None):
         import time
         deadline = time.time() + 30
         while time.time() < deadline:
+            conn = None
             try:
-                with urllib.request.urlopen(f"{local_url}/api/health", timeout=3) as resp:
-                    payload = json.load(resp)
-                    if payload.get("ok"):
-                        print(f"SMOKE OK: {payload}")
-                        return 0
+                # Bypass HTTP_PROXY settings on CI runners. This probe must
+                # always connect directly to the server in this process.
+                conn = http.client.HTTPConnection("127.0.0.1", args.port, timeout=3)
+                conn.request("GET", "/api/health")
+                resp = conn.getresponse()
+                payload = json.loads(resp.read())
+                if resp.status == 200 and payload.get("ok"):
+                    print(f"SMOKE OK: {payload}")
+                    return 0
             except Exception:
                 time.sleep(0.5)
+            finally:
+                if conn:
+                    conn.close()
         print("SMOKE FAILED: server did not become healthy within 30s")
         return 1
 
