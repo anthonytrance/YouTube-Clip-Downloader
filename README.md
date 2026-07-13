@@ -64,6 +64,30 @@ with downloads landing in the phone's browser downloads. Turn it off when
 you don't need it; it's off by default and the app is otherwise only
 reachable from the computer it runs on.
 
+Your phone and computer must be on the same trusted home WiFi. The first
+time you turn phone access on, the computer's firewall may ask permission:
+
+- **Windows:** On the Windows Security firewall question, select **Private
+  networks**, clear **Public networks**, then choose **Allow access**. If you
+  previously blocked or dismissed it, open **Windows Security**, **Firewall
+  & network protection**, **Allow an app through firewall**, then **Change
+  settings**. Allow **YouTube Clipper** on **Private** networks only. If it is
+  missing, choose **Allow another app** and select `YouTube Clipper.exe` from
+  the unzipped folder. If it still fails after you previously chose **Cancel**
+  or **Don't allow**, open **Firewall & network protection**, **Advanced
+  settings**, then **Inbound Rules**. Remove only blocking rules named
+  **YouTube Clipper**, restart the app, turn phone access on again, and allow
+  it on the Private network.
+- **Mac:** If macOS asks whether YouTube Clipper should accept incoming
+  network connections, choose **Allow**. If you previously chose **Deny**,
+  open Apple menu, **System Settings**, **Network**, **Firewall**, **Options**.
+  Add `YouTube Clipper` from the unzipped folder if needed and set it to
+  **Allow incoming connections**.
+
+Do not disable the firewall itself. Allowing the app is safer than opening a
+permanent port. Phone access stops listening when you turn it off in the
+clipper or close the app.
+
 ## For developers
 
 Python 3.9+. `pip install .` then `ytclip`. Useful flags: `--port`,

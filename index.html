@@ -66,9 +66,41 @@
       and press Download. The file lands in your Downloads folder.</li>
     </ol>
     <p>There's also a lossless mode that keeps YouTube's original video
-    quality untouched, and a phone mode: turn on "Use from your phone" in the
-    app and scan the QR code to use the clipper from a phone on the same
-    WiFi.</p>
+    quality untouched.</p>
+
+    <h2>Use it from your phone</h2>
+    <p>Your phone and computer must be on the same trusted home WiFi. In the
+    clipper, choose <em>Turn on phone access</em>, then scan the QR code or
+    open the address it shows.</p>
+
+    <h3>Windows firewall</h3>
+    <p>The first time you turn on phone access, Windows may ask whether to
+    allow YouTube Clipper to communicate through the firewall. Select
+    <em>Private networks</em>, clear <em>Public networks</em>, then choose
+    <em>Allow access</em>.</p>
+    <p>If you previously blocked or dismissed that question, open
+    <em>Windows Security</em>, then <em>Firewall &amp; network protection</em>,
+    <em>Allow an app through firewall</em>, and <em>Change settings</em>.
+    Allow <em>YouTube Clipper</em> on <em>Private</em> networks only. If it is
+    missing, choose <em>Allow another app</em> and select
+    <em>YouTube Clipper.exe</em> from the unzipped app folder.</p>
+    <p>If it still fails after you previously chose <em>Cancel</em> or
+    <em>Don't allow</em>, open <em>Firewall &amp; network protection</em>,
+    <em>Advanced settings</em>, then <em>Inbound Rules</em>. Remove only
+    blocking rules named <em>YouTube Clipper</em>, restart the app, turn phone
+    access on again, and allow it on the Private network.</p>
+
+    <h3>Mac firewall</h3>
+    <p>If macOS asks whether YouTube Clipper should accept incoming network
+    connections, choose <em>Allow</em>. If you previously chose
+    <em>Deny</em>, open Apple menu, <em>System Settings</em>, <em>Network</em>,
+    <em>Firewall</em>, then <em>Options</em>. Add <em>YouTube Clipper</em> from
+    the unzipped app folder if necessary and set it to
+    <em>Allow incoming connections</em>.</p>
+
+    <p>Do not turn the firewall itself off. Allowing the app is safer than
+    opening a permanent port. Phone access stops listening when you turn it
+    off in the clipper or close the app.</p>
     <p>The whole app works with keyboard only and with screen readers
     (NVDA, VoiceOver).</p>
   </main>
