@@ -19,7 +19,7 @@ route stays documented as a later upgrade (see section 0.4).
 - Version 2.1.1 fixes two bugs found during Anthony's local test: Preview now
   explicitly unmutes the YouTube player and announces playback, and format
   sizes are estimates for the selected clip rather than the entire source.
-- Release 2.2.0 is now the latest GitHub release, with freshly built Windows,
+- Release 2.2.0 was published with freshly built Windows,
   Mac Apple Silicon, and Mac Intel archives. All package self-tests and frozen
   smoke tests passed, and the general Windows and Mac CI passed its offline and
   online clip tests. The Dropbox Windows copy was replaced with 2.2.0.
@@ -31,8 +31,19 @@ route stays documented as a later upgrade (see section 0.4).
   the public HTTPS Funnel name instead of the private Wi-Fi address and does not
   open the extra LAN listener. The current detached public instance is served at
   `https://homeserv.tailc30d25.ts.net` through local port 8574.
-  The source also passed a real-YouTube Playwright check covering preview
+- The 2.2.0 source also passed a real-YouTube Playwright check covering preview
   playback, live-region feedback, and duration-scaled file-size estimates.
+- Release 2.2.1 is now the latest release, with new Windows, Mac Apple Silicon,
+  and Mac Intel archives. The visitor-facing interface was reviewed in desktop
+  light, desktop dark, phone light, and phone dark before packaging. All package
+  and general CI jobs passed, including online clip tests, and Dropbox was updated.
+- Version 2.2.1 removes operator-facing networking explanations from the public
+  interface, minimizes the public health response, and locks the deployed process
+  to its configured public URL so Host spoofing cannot reach the private phone
+  branch. It also uses the consistent YouTube Clipper title and hides the redundant
+  QR card on narrow phone screens while keeping it on desktop.
+- The current public 2.2.1 executable runs detached as PID 6628 with
+  `--public-url https://homeserv.tailc30d25.ts.net`.
 
 ### 0.1 Landed today (all committed, all verified on this machine)
 
